@@ -1,0 +1,111 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model TrackedUrl {
+  id        String   @id @default(uuid())
+  url       String   @unique
+  userId    String
+  enabled   Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  listing   Listing?
+
+  @@index([userId])
+  @@index([enabled])
+}
+
+model Listing {
+  id           String            @id @default(uuid())
+  trackedUrlId String            @unique
+  airbnbId     String?           @unique
+  title        String?
+  description  String?
+  location     String?
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+  trackedUrl   TrackedUrl        @relation(fields: [trackedUrlId], references: [id], onDelete: Cascade)
+  snapshots    ListingSnapshot[]
+  photos       Photo[]
+  reviews      Review[]
+
+  @@index([airbnbId])
+  @@index([trackedUrlId])
+}
+
+model ListingSnapshot {
+  id          String     @id @default(uuid())
+  listingId   String
+  version     Int
+  description String?
+  amenities   Json?
+  price       Float?
+  currency    String?
+  rating      Float?
+  reviewCount Int?
+  createdAt   DateTime   @default(now())
+  listing     Listing    @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  photos      Photo[]
+  reviews     Review[]
+  scrapeRun   ScrapeRun?
+
+  @@unique([listingId, version])
+  @@index([listingId, createdAt])
+  @@index([createdAt])
+}
+
+model Review {
+  id             String           @id @default(uuid())
+  listingId      String
+  snapshotId     String?
+  reviewId       String           @unique
+  reviewerName   String?
+  reviewerAvatar String?
+  rating         Int?
+  comment        String?
+  date           DateTime?
+  createdAt      DateTime         @default(now())
+  listing        Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  snapshot       ListingSnapshot? @relation(fields: [snapshotId], references: [id])
+
+  @@index([listingId])
+  @@index([snapshotId])
+  @@index([date])
+}
+
+model Photo {
+  id         String           @id @default(uuid())
+  listingId  String
+  snapshotId String?
+  url        String
+  caption    String?
+  order      Int?
+  createdAt  DateTime         @default(now())
+  listing    Listing          @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  snapshot   ListingSnapshot? @relation(fields: [snapshotId], references: [id])
+
+  @@index([listingId])
+  @@index([snapshotId])
+  @@index([order])
+}
+
+model ScrapeRun {
+  id           String           @id @default(uuid())
+  trackedUrlId String?
+  status       String
+  error        String?
+  startedAt    DateTime         @default(now())
+  completedAt  DateTime?
+  apifyRunId   String?
+  snapshotId   String?          @unique
+  snapshot     ListingSnapshot? @relation(fields: [snapshotId], references: [id])
+
+  @@index([status])
+  @@index([startedAt])
+  @@index([trackedUrlId])
+}

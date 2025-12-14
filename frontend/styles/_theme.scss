@@ -1,0 +1,163 @@
+// ============================================================================
+// CELTIC F.C. THEME - SCSS Variables & CSS Custom Properties
+// ============================================================================
+// Dark mode is the DEFAULT theme
+
+// ----------------------------------------------------------------------------
+// COLOR PALETTE (DO NOT MODIFY HEX VALUES)
+// ----------------------------------------------------------------------------
+
+// Primary (Celtic Greens)
+$green-primary: #009F3D;
+$green-dark:    #006B2D;
+$green-light:   #4CC98A;
+
+// Neutrals
+$white:         #FFFFFF;
+$gray-50:       #F8F9FA;
+$gray-100:      #E9ECEF;
+$gray-600:      #6C757D;
+$gray-900:      #212529;
+
+// Status
+$success:       #009F3D;
+$warning:       #FFC107;
+$error:         #DC3545;
+$info:          #0D6EFD;
+
+// ----------------------------------------------------------------------------
+// DARK MODE (DEFAULT)
+// ----------------------------------------------------------------------------
+
+$dark-background:        #0F1412;
+$dark-surface:           #161C19;
+$dark-surface-elevated:  #1E2522;
+
+$dark-text-primary:      #E9ECEF;
+$dark-text-secondary:    #ADB5BD;
+$dark-text-muted:        #6C757D;
+
+$dark-primary:           $green-primary;
+$dark-primary-hover:     $green-light;
+$dark-border:            #2A332F;
+
+$dark-success:           $success;
+$dark-warning:           $warning;
+$dark-error:             $error;
+$dark-info:              $info;
+
+// ----------------------------------------------------------------------------
+// LIGHT MODE (OPTIONAL)
+// ----------------------------------------------------------------------------
+
+$light-background:        $gray-50;
+$light-surface:           $white;
+$light-surface-elevated:  $gray-100;
+
+$light-text-primary:      $gray-900;
+$light-text-secondary:    $gray-600;
+$light-text-muted:        $gray-600;
+
+$light-primary:           $green-primary;
+$light-primary-hover:     $green-dark;
+$light-border:            $gray-100;
+
+$light-success:           $success;
+$light-warning:           $warning;
+$light-error:             $error;
+$light-info:              $info;
+
+// ----------------------------------------------------------------------------
+// CSS CUSTOM PROPERTIES - DARK MODE (DEFAULT)
+// ----------------------------------------------------------------------------
+
+:root,
+:root[data-theme="dark"] {
+  // Backgrounds
+  --color-background:        #{$dark-background};
+  --color-surface:           #{$dark-surface};
+  --color-surface-elevated:  #{$dark-surface-elevated};
+
+  // Text
+  --color-text-primary:      #{$dark-text-primary};
+  --color-text-secondary:    #{$dark-text-secondary};
+  --color-text-muted:        #{$dark-text-muted};
+  --color-heading-primary:   #{$white}; // Maximum contrast for headings
+
+  // Primary
+  --color-primary:           #{$dark-primary};
+  --color-primary-hover:     #{$dark-primary-hover};
+  --color-border:            #{$dark-border};
+
+  // Status
+  --color-success:           #{$dark-success};
+  --color-warning:           #{$dark-warning};
+  --color-error:             #{$dark-error};
+  --color-info:              #{$dark-info};
+}
+
+// ----------------------------------------------------------------------------
+// CSS CUSTOM PROPERTIES - LIGHT MODE (OPTIONAL)
+// ----------------------------------------------------------------------------
+
+:root[data-theme="light"] {
+  // Backgrounds
+  --color-background:        #{$light-background};
+  --color-surface:           #{$light-surface};
+  --color-surface-elevated:  #{$light-surface-elevated};
+
+  // Text
+  --color-text-primary:      #{$light-text-primary};
+  --color-text-secondary:    #{$light-text-secondary};
+  --color-text-muted:        #{$light-text-muted};
+  --color-heading-primary:   #{$light-text-primary}; // Use primary text color in light mode
+
+  // Primary
+  --color-primary:           #{$light-primary};
+  --color-primary-hover:     #{$light-primary-hover};
+  --color-border:            #{$light-border};
+
+  // Status
+  --color-success:           #{$light-success};
+  --color-warning:           #{$light-warning};
+  --color-error:             #{$light-error};
+  --color-info:              #{$light-info};
+}
+
+// ----------------------------------------------------------------------------
+// SCSS VARIABLES FOR USE IN SCSS FILES
+// ----------------------------------------------------------------------------
+
+// Default to dark mode
+$color-background:        $dark-background;
+$color-surface:           $dark-surface;
+$color-surface-elevated:  $dark-surface-elevated;
+
+$color-text-primary:      $dark-text-primary;
+$color-text-secondary:    $dark-text-secondary;
+$color-text-muted:        $dark-text-muted;
+
+$color-primary:           $dark-primary;
+$color-primary-hover:     $dark-primary-hover;
+$color-border:            $dark-border;
+
+$color-success:           $dark-success;
+$color-warning:           $dark-warning;
+$color-error:             $dark-error;
+$color-info:              $dark-info;
+
+// Light mode override (when data-theme="light" is set)
+:root[data-theme="light"] {
+  $color-background:        $light-background;
+  $color-surface:           $light-surface;
+  $color-surface-elevated:  $light-surface-elevated;
+
+  $color-text-primary:      $light-text-primary;
+  $color-text-secondary:    $light-text-secondary;
+  $color-text-muted:        $light-text-muted;
+
+  $color-primary:           $light-primary;
+  $color-primary-hover:     $light-primary-hover;
+  $color-border:            $light-border;
+}
+

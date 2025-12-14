@@ -1,0 +1,32 @@
+// ============================================================================
+// GLOBAL STYLES - CELTIC F.C. THEME
+// ============================================================================
+
+@import '../styles/_theme';
+@import '../styles/_components';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+// ----------------------------------------------------------------------------
+// BASE STYLES
+// ----------------------------------------------------------------------------
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+// ----------------------------------------------------------------------------
+// TAILWIND UTILITIES
+// ----------------------------------------------------------------------------
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
