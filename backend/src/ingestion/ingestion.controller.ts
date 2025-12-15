@@ -1,4 +1,4 @@
-import { Controller, Post, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request, Body } from '@nestjs/common';
 import { IngestionService } from './ingestion.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { IngestDto } from './dto/ingest.dto';

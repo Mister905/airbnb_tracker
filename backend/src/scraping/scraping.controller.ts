@@ -1,4 +1,4 @@
-import { Controller, Post, Get, Param, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, Param, UseGuards, Request, Body } from '@nestjs/common';
 import { ScrapingService } from './scraping.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { ManualScrapeDto } from './dto/manual-scrape.dto';

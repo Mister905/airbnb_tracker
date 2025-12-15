@@ -42,7 +42,14 @@ export function extractRoomIdFromUrl(url: string | null | undefined): string | n
  * Extract room URL from listing data
  * Returns full Airbnb URL (e.g., "https://www.airbnb.com/rooms/123456")
  */
-export function extractRoomUrl(listing: { url?: string; listingUrl?: string; roomUrl?: string }): string | null {
+export function extractRoomUrl(listing: {
+  url?: string;
+  listingUrl?: string;
+  roomUrl?: string;
+  roomId?: string;
+  id?: string;
+  listingId?: string;
+}): string | null {
   // Try different possible URL fields
   let roomUrl = listing.url || listing.listingUrl || listing.roomUrl;
 
