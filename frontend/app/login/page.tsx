@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { supabase } from '@/lib/supabase';
 import { useAppDispatch } from '@/lib/hooks';
 import { setUser } from '@/lib/store/authSlice';
@@ -73,9 +74,19 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--color-background)' }}>
       <div className="card max-w-md w-full space-y-8 p-8">
         <div>
-          <h2 className="text-center text-3xl font-extrabold" style={{ color: 'var(--color-text-primary)' }}>
-            Airbnb Tracker
-          </h2>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Image
+              src="/images/Airbnb_Logo.svg"
+              alt="Airbnb"
+              width={100}
+              height={31}
+              className="h-8 w-auto"
+              priority
+            />
+            <h2 className="text-3xl font-extrabold" style={{ color: 'var(--color-text-primary)' }}>
+              Tracker
+            </h2>
+          </div>
           <p className="mt-2 text-center text-sm" style={{ color: 'var(--color-text-secondary)' }}>
             Sign in to your account
           </p>
