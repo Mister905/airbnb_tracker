@@ -1,8 +1,10 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class SnapshotsService {
+  private readonly logger = new Logger(SnapshotsService.name);
+
   constructor(private prisma: PrismaService) {}
 
   async findAllSnapshots(
@@ -28,7 +30,10 @@ export class SnapshotsService {
     }
 
     const skip = (page - 1) * limit;
-    const where: any = {
+    const where: {
+      listingId: string;
+      createdAt?: { gte?: Date; lte?: Date };
+    } = {
       listingId,
     };
 
@@ -40,7 +45,14 @@ export class SnapshotsService {
 
     const [snapshots, total] = await Promise.all([
       this.prisma.listingSnapshot.findMany({
-        where,
+        where: {
+          ...where,
+          listing: {
+            trackedUrl: {
+              userId,
+            },
+          },
+        },
         include: {
           photos: {
             orderBy: { order: 'asc' },
@@ -54,7 +66,16 @@ export class SnapshotsService {
         take: Math.min(limit, 300), // Max 300
         orderBy: { createdAt: 'desc' },
       }),
-      this.prisma.listingSnapshot.count({ where }),
+      this.prisma.listingSnapshot.count({
+        where: {
+          ...where,
+          listing: {
+            trackedUrl: {
+              userId,
+            },
+          },
+        },
+      }),
     ]);
 
     return {
@@ -111,6 +132,8 @@ export class SnapshotsService {
       throw new BadRequestException('Snapshots must be from the same listing');
     }
 
+        this.logger.debug(`Comparing snapshots: from=${fromId}, to=${toId}`);
+
     // Calculate differences
     const descriptionDiff = this.compareText(
       fromSnapshot.description || '',
@@ -123,14 +146,14 @@ export class SnapshotsService {
     );
 
     const photosDiff = this.comparePhotos(
-      fromSnapshot.photos,
-      toSnapshot.photos,
+      fromSnapshot.photos || [],
+      toSnapshot.photos || [],
     );
 
     // Group reviews by month
     const reviewsByMonth = this.groupReviewsByMonth(
-      fromSnapshot.reviews,
-      toSnapshot.reviews,
+      fromSnapshot.reviews || [],
+      toSnapshot.reviews || [],
     );
 
     return {
@@ -203,36 +226,73 @@ export class SnapshotsService {
   private groupReviewsByMonth(from: any[], to: any[]) {
     const fromByMonth = new Map<string, any[]>();
     const toByMonth = new Map<string, any[]>();
+    const fromWithoutDate: any[] = [];
+    const toWithoutDate: any[] = [];
+
+        this.logger.debug(`Grouping reviews: from=${from?.length || 0}, to=${to?.length || 0}`);
 
     from.forEach((review) => {
       if (review.date) {
-        const month = new Date(review.date).toISOString().slice(0, 7);
-        if (!fromByMonth.has(month)) {
-          fromByMonth.set(month, []);
+        try {
+          const month = new Date(review.date).toISOString().slice(0, 7);
+          if (!fromByMonth.has(month)) {
+            fromByMonth.set(month, []);
+          }
+          fromByMonth.get(month)!.push(review);
+        } catch (e) {
+          this.logger.warn(`Invalid date for review: ${review.date}`, e instanceof Error ? e.stack : String(e));
+          fromWithoutDate.push(review);
         }
-        fromByMonth.get(month)!.push(review);
+      } else {
+        // Include reviews without dates in a special "Unknown" month
+        fromWithoutDate.push(review);
       }
     });
 
     to.forEach((review) => {
       if (review.date) {
-        const month = new Date(review.date).toISOString().slice(0, 7);
-        if (!toByMonth.has(month)) {
-          toByMonth.set(month, []);
+        try {
+          const month = new Date(review.date).toISOString().slice(0, 7);
+          if (!toByMonth.has(month)) {
+            toByMonth.set(month, []);
+          }
+          toByMonth.get(month)!.push(review);
+        } catch (e) {
+          this.logger.warn(`Invalid date for review: ${review.date}`, e instanceof Error ? e.stack : String(e));
+          toWithoutDate.push(review);
         }
-        toByMonth.get(month)!.push(review);
+      } else {
+        // Include reviews without dates in a special "Unknown" month
+        toWithoutDate.push(review);
       }
     });
 
     const allMonths = new Set([...fromByMonth.keys(), ...toByMonth.keys()]);
+    
+    // Add "Unknown" month if there are reviews without dates
+    if (fromWithoutDate.length > 0 || toWithoutDate.length > 0) {
+      allMonths.add('Unknown');
+    }
 
-    return Array.from(allMonths)
+    const result = Array.from(allMonths)
       .sort()
       .reverse()
-      .map((month) => ({
-        month,
-        from: fromByMonth.get(month) || [],
-        to: toByMonth.get(month) || [],
-      }));
+      .map((month) => {
+        if (month === 'Unknown') {
+          return {
+            month: 'Unknown Date',
+            from: fromWithoutDate,
+            to: toWithoutDate,
+          };
+        }
+        return {
+          month: new Date(`${month}-01`).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
+          from: fromByMonth.get(month) || [],
+          to: toByMonth.get(month) || [],
+        };
+      });
+
+        this.logger.debug(`Grouped reviews into ${result.length} month groups`);
+    return result;
   }
 }

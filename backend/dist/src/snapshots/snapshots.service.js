@@ -105,10 +105,13 @@ let SnapshotsService = class SnapshotsService {
         if (fromSnapshot.listingId !== toSnapshot.listingId) {
             throw new common_1.BadRequestException('Snapshots must be from the same listing');
         }
+        console.log(`[Snapshots] Comparing snapshots: from=${fromId}, to=${toId}`);
+        console.log(`[Snapshots] From snapshot has ${fromSnapshot.reviews?.length || 0} reviews`);
+        console.log(`[Snapshots] To snapshot has ${toSnapshot.reviews?.length || 0} reviews`);
         const descriptionDiff = this.compareText(fromSnapshot.description || '', toSnapshot.description || '');
         const amenitiesDiff = this.compareAmenities(fromSnapshot.amenities || [], toSnapshot.amenities || []);
-        const photosDiff = this.comparePhotos(fromSnapshot.photos, toSnapshot.photos);
-        const reviewsByMonth = this.groupReviewsByMonth(fromSnapshot.reviews, toSnapshot.reviews);
+        const photosDiff = this.comparePhotos(fromSnapshot.photos || [], toSnapshot.photos || []);
+        const reviewsByMonth = this.groupReviewsByMonth(fromSnapshot.reviews || [], toSnapshot.reviews || []);
         return {
             from: fromSnapshot,
             to: toSnapshot,
@@ -171,33 +174,68 @@ let SnapshotsService = class SnapshotsService {
     groupReviewsByMonth(from, to) {
         const fromByMonth = new Map();
         const toByMonth = new Map();
+        const fromWithoutDate = [];
+        const toWithoutDate = [];
+        console.log(`[Snapshots] Grouping reviews: from=${from?.length || 0}, to=${to?.length || 0}`);
         from.forEach((review) => {
             if (review.date) {
-                const month = new Date(review.date).toISOString().slice(0, 7);
-                if (!fromByMonth.has(month)) {
-                    fromByMonth.set(month, []);
+                try {
+                    const month = new Date(review.date).toISOString().slice(0, 7);
+                    if (!fromByMonth.has(month)) {
+                        fromByMonth.set(month, []);
+                    }
+                    fromByMonth.get(month).push(review);
                 }
-                fromByMonth.get(month).push(review);
+                catch (e) {
+                    console.warn(`[Snapshots] Invalid date for review:`, review.date, e);
+                    fromWithoutDate.push(review);
+                }
+            }
+            else {
+                fromWithoutDate.push(review);
             }
         });
         to.forEach((review) => {
             if (review.date) {
-                const month = new Date(review.date).toISOString().slice(0, 7);
-                if (!toByMonth.has(month)) {
-                    toByMonth.set(month, []);
+                try {
+                    const month = new Date(review.date).toISOString().slice(0, 7);
+                    if (!toByMonth.has(month)) {
+                        toByMonth.set(month, []);
+                    }
+                    toByMonth.get(month).push(review);
                 }
-                toByMonth.get(month).push(review);
+                catch (e) {
+                    console.warn(`[Snapshots] Invalid date for review:`, review.date, e);
+                    toWithoutDate.push(review);
+                }
+            }
+            else {
+                toWithoutDate.push(review);
             }
         });
         const allMonths = new Set([...fromByMonth.keys(), ...toByMonth.keys()]);
-        return Array.from(allMonths)
+        if (fromWithoutDate.length > 0 || toWithoutDate.length > 0) {
+            allMonths.add('Unknown');
+        }
+        const result = Array.from(allMonths)
             .sort()
             .reverse()
-            .map((month) => ({
-            month,
-            from: fromByMonth.get(month) || [],
-            to: toByMonth.get(month) || [],
-        }));
+            .map((month) => {
+            if (month === 'Unknown') {
+                return {
+                    month: 'Unknown Date',
+                    from: fromWithoutDate,
+                    to: toWithoutDate,
+                };
+            }
+            return {
+                month: new Date(`${month}-01`).toLocaleDateString('en-US', { year: 'numeric', month: 'long' }),
+                from: fromByMonth.get(month) || [],
+                to: toByMonth.get(month) || [],
+            };
+        });
+        console.log(`[Snapshots] Grouped reviews into ${result.length} month groups`);
+        return result;
     }
 };
 exports.SnapshotsService = SnapshotsService;

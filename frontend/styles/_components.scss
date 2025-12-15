@@ -69,6 +69,15 @@ body {
   }
 }
 
+// Secondary button with primary color accent (e.g., "Scrape" button)
+.btn-secondary-primary {
+  border: 1px solid rgba(0, 159, 61, 0.4) !important; // Primary green color with opacity
+
+  &:hover:not(:disabled) {
+    border-color: rgba(0, 159, 61, 0.6) !important; // More pronounced on hover
+  }
+}
+
 .btn-ghost {
   background-color: transparent;
   color: var(--color-text-primary);
@@ -97,10 +106,11 @@ body {
 // Error variant for ghost buttons (e.g., Delete button)
 .btn-ghost-error {
   color: var(--color-error) !important;
+  border: 1px solid rgba(220, 53, 69, 0.4) !important; // Visible border even when not hovering
 
   &:hover:not(:disabled) {
     background-color: rgba(220, 53, 69, 0.15); // Visible error background on hover
-    border: 1px solid rgba(220, 53, 69, 0.3); // Add subtle border for more visibility
+    border: 1px solid rgba(220, 53, 69, 0.6) !important; // More pronounced border on hover
     color: var(--color-error) !important;
   }
 }

@@ -1,12 +1,17 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { fetchTrackedUrls } from '@/lib/store/listingsSlice';
 import { fetchSnapshots, compareSnapshots } from '@/lib/store/snapshotsSlice';
 import { api } from '@/lib/api';
 import * as Select from '@radix-ui/react-select';
 import * as Tabs from '@radix-ui/react-tabs';
+import DescriptionDiff from './DescriptionDiff';
+import ArrayDiff from './ArrayDiff';
+import PhotoDiff from './PhotoDiff';
+import ReviewDiff from './ReviewDiff';
+import SummaryBanner from './SummaryBanner';
 
 export default function DiffToolContent() {
   const dispatch = useAppDispatch();
@@ -36,12 +41,65 @@ export default function DiffToolContent() {
 
   const selectedListing = trackedUrls.find((u) => u.listing?.id === selectedListingId);
 
+  // Flatten reviews from grouped format to arrays for ReviewDiff
+  const { oldReviews, newReviews } = useMemo(() => {
+    if (!comparison?.diffs?.reviews) {
+      return { oldReviews: [], newReviews: [] };
+    }
+    
+    const old: any[] = [];
+    const new_: any[] = [];
+    
+    comparison.diffs.reviews.forEach((monthData: any) => {
+      old.push(...(monthData.from || []));
+      new_.push(...(monthData.to || []));
+    });
+    
+    return { oldReviews: old, newReviews: new_ };
+  }, [comparison]);
+
+  // Generate summary text
+  const summaryText = useMemo(() => {
+    if (!comparison) return '';
+    
+    const parts: string[] = [];
+    
+    if (comparison.diffs.description.changed) {
+      parts.push('Description changed');
+    }
+    
+    if (comparison.diffs.amenities.added.length > 0) {
+      parts.push(`${comparison.diffs.amenities.added.length} amenit${comparison.diffs.amenities.added.length === 1 ? 'y' : 'ies'} added`);
+    }
+    if (comparison.diffs.amenities.removed.length > 0) {
+      parts.push(`${comparison.diffs.amenities.removed.length} amenit${comparison.diffs.amenities.removed.length === 1 ? 'y' : 'ies'} removed`);
+    }
+    
+    if (comparison.diffs.photos.added.length > 0) {
+      parts.push(`${comparison.diffs.photos.added.length} photo${comparison.diffs.photos.added.length === 1 ? '' : 's'} added`);
+    }
+    if (comparison.diffs.photos.removed.length > 0) {
+      parts.push(`${comparison.diffs.photos.removed.length} photo${comparison.diffs.photos.removed.length === 1 ? '' : 's'} removed`);
+    }
+    
+    if (comparison.diffs.price.changed) {
+      parts.push(`Price changed from ${comparison.diffs.price.from || 'N/A'} to ${comparison.diffs.price.to || 'N/A'}`);
+    }
+    
+    if (comparison.diffs.rating.changed) {
+      parts.push(`Rating changed from ${comparison.diffs.rating.from || 'N/A'} to ${comparison.diffs.rating.to || 'N/A'}`);
+    }
+    
+    return parts.length > 0 ? parts.join(', ') : 'No changes detected';
+  }, [comparison]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl heading-primary mb-8">Diff Tool</h1>
 
       <div className="card mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div className="space-y-4">
+          {/* Select Listing - Full Width Row */}
           <div>
             <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
               Select Listing
@@ -71,8 +129,9 @@ export default function DiffToolContent() {
             </Select.Root>
           </div>
 
+          {/* From Snapshot and To Snapshot - Side by Side Row */}
           {selectedListingId && (
-            <>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                   From Snapshot
@@ -130,37 +189,45 @@ export default function DiffToolContent() {
                   </Select.Portal>
                 </Select.Root>
               </div>
-            </>
+            </div>
           )}
 
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-              Start Date
-            </label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="input w-full"
-            />
-          </div>
+          {/* Start Date and End Date - Side by Side Row (Optional) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                Start Date <span className="text-xs font-normal" style={{ color: 'var(--color-text-muted)' }}>(Optional)</span>
+              </label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="input w-full"
+              />
+            </div>
 
-          <div>
-            <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-              End Date
-            </label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="input w-full"
-            />
+            <div>
+              <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                End Date <span className="text-xs font-normal" style={{ color: 'var(--color-text-muted)' }}>(Optional)</span>
+              </label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="input w-full"
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {comparison && (
         <div className="card">
+          {/* Summary Banner */}
+          <div className="mb-6">
+            <SummaryBanner summaryText={summaryText} />
+          </div>
+
           <Tabs.Root defaultValue="description" className="w-full">
             <Tabs.List className="flex border-b" style={{ borderColor: 'var(--color-border)' }}>
               <Tabs.Trigger
@@ -173,181 +240,54 @@ export default function DiffToolContent() {
               <Tabs.Trigger
                 value="amenities"
                 className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 transition-colors"
-                style={{ 
-                  color: 'var(--color-text-secondary)',
-                  '&:hover': { color: 'var(--color-text-primary)' },
-                  '&[data-state=active]': { 
-                    color: 'var(--color-primary)',
-                    borderColor: 'var(--color-primary)'
-                  }
-                }}
+                style={{ color: 'var(--color-text-secondary)' }}
               >
                 Amenities
               </Tabs.Trigger>
               <Tabs.Trigger
                 value="photos"
                 className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 transition-colors"
-                style={{ 
-                  color: 'var(--color-text-secondary)',
-                  '&:hover': { color: 'var(--color-text-primary)' },
-                  '&[data-state=active]': { 
-                    color: 'var(--color-primary)',
-                    borderColor: 'var(--color-primary)'
-                  }
-                }}
+                style={{ color: 'var(--color-text-secondary)' }}
               >
                 Photos
               </Tabs.Trigger>
               <Tabs.Trigger
                 value="reviews"
                 className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 transition-colors"
-                style={{ 
-                  color: 'var(--color-text-secondary)',
-                  '&:hover': { color: 'var(--color-text-primary)' },
-                  '&[data-state=active]': { 
-                    color: 'var(--color-primary)',
-                    borderColor: 'var(--color-primary)'
-                  }
-                }}
+                style={{ color: 'var(--color-text-secondary)' }}
               >
                 Reviews
               </Tabs.Trigger>
             </Tabs.List>
 
             <Tabs.Content value="description" className="mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>From (Version {comparison.from.version})</h3>
-                  <div className="p-4 rounded-md whitespace-pre-wrap" style={{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}>
-                    {comparison.from.description || 'No description'}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>To (Version {comparison.to.version})</h3>
-                  <div className="p-4 rounded-md whitespace-pre-wrap" style={{ backgroundColor: 'var(--color-surface-elevated)', color: 'var(--color-text-primary)' }}>
-                    {comparison.to.description || 'No description'}
-                  </div>
-                </div>
-              </div>
-              {comparison.diffs.description.changed && (
-                <div className="mt-4 alert alert-warning">
-                  <p className="text-sm">Description has changed</p>
-                </div>
-              )}
+              <DescriptionDiff
+                oldText={comparison.from.description || ''}
+                newText={comparison.to.description || ''}
+              />
             </Tabs.Content>
 
             <Tabs.Content value="amenities" className="mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>From</h3>
-                  <ul className="list-disc list-inside space-y-1" style={{ color: 'var(--color-text-primary)' }}>
-                    {(comparison.diffs.amenities.from || []).map((amenity: any, idx: number) => (
-                      <li key={idx}>{amenity.name || amenity}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>To</h3>
-                  <ul className="list-disc list-inside space-y-1" style={{ color: 'var(--color-text-primary)' }}>
-                    {(comparison.diffs.amenities.to || []).map((amenity: any, idx: number) => (
-                      <li key={idx} className={comparison.diffs.amenities.added.some((a: any) => (a.name || a) === (amenity.name || amenity)) ? 'diff-added' : ''}>
-                        {amenity.name || amenity}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-              {comparison.diffs.amenities.added.length > 0 && (
-                <div className="mt-4 alert alert-success">
-                  <p className="text-sm font-semibold mb-2">Added:</p>
-                  <ul className="list-disc list-inside">
-                    {comparison.diffs.amenities.added.map((a: any, idx: number) => (
-                      <li key={idx} className="diff-added">{a.name || a}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {comparison.diffs.amenities.removed.length > 0 && (
-                <div className="mt-4 alert alert-error">
-                  <p className="text-sm font-semibold mb-2">Removed:</p>
-                  <ul className="list-disc list-inside">
-                    {comparison.diffs.amenities.removed.map((a: any, idx: number) => (
-                      <li key={idx} className="diff-removed">{a.name || a}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
+              <ArrayDiff
+                oldItems={comparison.diffs.amenities.from || []}
+                newItems={comparison.diffs.amenities.to || []}
+                fieldName="Amenities"
+              />
             </Tabs.Content>
 
             <Tabs.Content value="photos" className="mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>From ({comparison.diffs.photos.from.length} photos)</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {comparison.diffs.photos.from.slice(0, 4).map((photo: any) => (
-                      <img key={photo.id} src={photo.url} alt={photo.caption} className="rounded-md" />
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>To ({comparison.diffs.photos.to.length} photos)</h3>
-                  <div className="grid grid-cols-2 gap-2">
-                    {comparison.diffs.photos.to.slice(0, 4).map((photo: any) => (
-                      <img key={photo.id} src={photo.url} alt={photo.caption} className="rounded-md" />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              {comparison.diffs.photos.added.length > 0 && (
-                <div className="mt-4 alert alert-success">
-                  <p className="text-sm font-semibold mb-2">Added Photos:</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {comparison.diffs.photos.added.map((photo: any) => (
-                      <img key={photo.id} src={photo.url} alt={photo.caption} className="rounded-md" />
-                    ))}
-                  </div>
-                </div>
-              )}
-              {comparison.diffs.photos.removed && comparison.diffs.photos.removed.length > 0 && (
-                <div className="mt-4 alert alert-error">
-                  <p className="text-sm font-semibold mb-2">Removed Photos:</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {comparison.diffs.photos.removed.map((photo: any) => (
-                      <img key={photo.id} src={photo.url} alt={photo.caption} className="rounded-md opacity-50" />
-                    ))}
-                  </div>
-                </div>
-              )}
+              <PhotoDiff
+                oldPhotos={comparison.from.photos || []}
+                newPhotos={comparison.to.photos || []}
+              />
             </Tabs.Content>
 
             <Tabs.Content value="reviews" className="mt-4">
-              <div className="space-y-4">
-                {comparison.diffs.reviews.map((monthData: any) => (
-                  <div key={monthData.month} className="border rounded-md p-4" style={{ borderColor: 'var(--color-border)' }}>
-                    <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text-primary)' }}>{monthData.month}</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>From: {monthData.from.length} reviews</p>
-                        {monthData.from.slice(0, 3).map((review: any) => (
-                          <div key={review.id} className="mb-2 p-2 rounded" style={{ backgroundColor: 'var(--color-surface-elevated)' }}>
-                            <p className="text-sm" style={{ color: 'var(--color-text-primary)' }}>{review.comment}</p>
-                            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{review.reviewerName}</p>
-                          </div>
-                        ))}
-                      </div>
-                      <div>
-                        <p className="text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>To: {monthData.to.length} reviews</p>
-                        {monthData.to.slice(0, 3).map((review: any) => (
-                          <div key={review.id} className="mb-2 p-2 rounded" style={{ backgroundColor: 'var(--color-surface-elevated)' }}>
-                            <p className="text-sm" style={{ color: 'var(--color-text-primary)' }}>{review.comment}</p>
-                            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{review.reviewerName}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <ReviewDiff
+                oldReviews={oldReviews}
+                newReviews={newReviews}
+                showUnchangedReviews={true}
+              />
             </Tabs.Content>
           </Tabs.Root>
         </div>

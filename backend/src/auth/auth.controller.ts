@@ -1,14 +1,15 @@
-import { Controller, Post, Body, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, Get, UseGuards, Request } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { VerifyTokenDto } from './dto/verify-token.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('verify')
-  async verifyToken(@Body('token') token: string) {
-    const user = await this.authService.validateSupabaseToken(token);
+  async verifyToken(@Body() dto: VerifyTokenDto) {
+    const user = await this.authService.validateSupabaseToken(dto.token);
     const jwt = await this.authService.generateJwt({
       sub: user.id,
       email: user.email,

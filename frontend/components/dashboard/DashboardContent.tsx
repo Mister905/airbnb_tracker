@@ -418,7 +418,7 @@ export default function DashboardContent() {
             color: 'var(--color-text-secondary)'
           }}>
             <p className="text-sm">
-              <strong style={{ color: 'var(--color-text-primary)' }}>Note:</strong> The <strong>Status</strong> column will show as "Pending" and the <strong>Listing Title</strong> column will be empty until you perform the initial scrape for each listing. Click "Scrape Now" on a listing or use "Scrape All" to get started.
+              <strong style={{ color: 'var(--color-text-primary)' }}>Note:</strong> The <strong>Status</strong> column will show as "Pending" and the <strong>Listing Title</strong> column will be empty until you perform the initial scrape for each listing. Click "Scrape" on a listing or use "Scrape All" to get started.
             </p>
           </div>
           <div className="card overflow-hidden">
@@ -543,16 +543,16 @@ export default function DashboardContent() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex items-center justify-end gap-2">
-                          {!isScraping && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              onClick={() => handleScrape(url)}
-                              style={{ color: 'var(--color-primary)' }}
-                            >
-                              Scrape 
-                            </Button>
-                          )}
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            onClick={() => handleScrape(url)}
+                            disabled={isScraping}
+                            style={{ color: 'var(--color-primary)' }}
+                            className="btn-secondary-primary"
+                          >
+                            {isScraping ? 'Scraping...' : 'Scrape'}
+                          </Button>
                           <Button
                             variant="ghost"
                             size="sm"

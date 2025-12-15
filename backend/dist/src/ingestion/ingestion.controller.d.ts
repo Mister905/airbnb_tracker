@@ -8,8 +8,6 @@ export declare class IngestionController {
         scrapeRunId: string;
     }): Promise<{
         id: string;
-        createdAt: Date;
-        listingId: string;
         version: number;
         description: string | null;
         amenities: import("@prisma/client/runtime/library").JsonValue | null;
@@ -17,5 +15,7 @@ export declare class IngestionController {
         currency: string | null;
         rating: number | null;
         reviewCount: number | null;
+        createdAt: Date;
+        listingId: string;
     }>;
 }

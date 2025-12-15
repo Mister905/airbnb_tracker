@@ -8,20 +8,20 @@ export declare class ScrapingController {
         error: string | null;
         id: string;
         trackedUrlId: string | null;
-        snapshotId: string | null;
         status: string;
         startedAt: Date;
         completedAt: Date | null;
         apifyRunId: string | null;
+        snapshotId: string | null;
     }>;
     getScrapeStatus(trackedUrlId: string, req: any): Promise<{
         error: string | null;
         id: string;
         trackedUrlId: string | null;
-        snapshotId: string | null;
         status: string;
         startedAt: Date;
         completedAt: Date | null;
         apifyRunId: string | null;
+        snapshotId: string | null;
     }[]>;
 }

@@ -19,7 +19,10 @@ export class SupabaseStrategy extends PassportStrategy(Strategy, 'supabase') {
     });
   }
 
-  async validate(payload: any) {
+  async validate(payload: { sub?: string }) {
+    if (!payload.sub) {
+      throw new UnauthorizedException('Missing user ID in token');
+    }
     try {
       const user = await this.authService.validateSupabaseToken(payload.sub);
       return { userId: user.id, email: user.email };

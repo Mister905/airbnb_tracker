@@ -12,21 +12,23 @@ export declare class ScrapingService {
         error: string | null;
         id: string;
         trackedUrlId: string | null;
-        snapshotId: string | null;
         status: string;
         startedAt: Date;
         completedAt: Date | null;
         apifyRunId: string | null;
+        snapshotId: string | null;
     }>;
     private scrapeUrl;
+    private waitForReviewsCompletion;
+    private mergeReviewsWithListings;
     getScrapeStatus(trackedUrlId: string, userId: string): Promise<{
         error: string | null;
         id: string;
         trackedUrlId: string | null;
-        snapshotId: string | null;
         status: string;
         startedAt: Date;
         completedAt: Date | null;
         apifyRunId: string | null;
+        snapshotId: string | null;
     }[]>;
 }

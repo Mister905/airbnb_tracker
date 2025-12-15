@@ -1,6 +1,7 @@
-import { Controller, Post, Body, UseGuards, Request } from '@nestjs/common';
+import { Controller, Post, UseGuards, Request } from '@nestjs/common';
 import { IngestionService } from './ingestion.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { IngestDto } from './dto/ingest.dto';
 
 @Controller('api/ingest')
 @UseGuards(JwtAuthGuard)
@@ -8,19 +9,12 @@ export class IngestionController {
   constructor(private readonly ingestionService: IngestionService) {}
 
   @Post()
-  async ingest(
-    @Request() req,
-    @Body() body: {
-      trackedUrlId: string;
-      data: any[];
-      scrapeRunId: string;
-    },
-  ) {
+  async ingest(@Request() req, @Body() dto: IngestDto) {
     return this.ingestionService.ingestData(
-      body.trackedUrlId,
+      dto.trackedUrlId,
       req.user.userId,
-      body.data,
-      body.scrapeRunId,
+      dto.data,
+      dto.scrapeRunId,
     );
   }
 }
