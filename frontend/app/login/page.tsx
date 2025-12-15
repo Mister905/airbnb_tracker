@@ -55,12 +55,14 @@ export default function LoginPage() {
           localStorage.setItem('backend_jwt', verifyData.jwt);
           
           router.push('/dashboard');
-        } catch (err: any) {
-          setError(err.message || 'Failed to authenticate with backend');
+        } catch (err) {
+          const error = err instanceof Error ? err : new Error('Failed to authenticate with backend');
+          setError(error.message);
         }
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to login');
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error('Failed to login');
+      setError(error.message);
     } finally {
       setLoading(false);
     }

@@ -70,7 +70,8 @@ export function diffReviews(oldReviews: Review[], newReviews: Review[]): ReviewD
   });
 
   // Find added and updated reviews
-  for (const [key, newReview] of newMap.entries()) {
+  // Convert Map entries to array to avoid downlevelIteration requirement
+  for (const [key, newReview] of Array.from(newMap.entries())) {
     const oldReview = oldMap.get(key);
     
     if (!oldReview) {
@@ -92,7 +93,7 @@ export function diffReviews(oldReviews: Review[], newReviews: Review[]): ReviewD
   }
 
   // Find removed reviews
-  for (const [key, oldReview] of oldMap.entries()) {
+  for (const [key, oldReview] of Array.from(oldMap.entries())) {
     if (!newMap.has(key)) {
       removed.push({
         type: "removed",

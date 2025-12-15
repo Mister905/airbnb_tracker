@@ -6,7 +6,7 @@ export interface ListingSnapshot {
   listingId: string;
   version: number;
   description?: string;
-  amenities?: any;
+  amenities?: string[] | unknown;
   price?: number;
   currency?: string;
   rating?: number;
@@ -42,9 +42,23 @@ export interface ScrapeRun {
   completedAt?: string;
 }
 
+interface SnapshotComparison {
+  from: ListingSnapshot;
+  to: ListingSnapshot;
+  diffs: {
+    description: { from: string; to: string; changed: boolean };
+    amenities: { from: string[]; to: string[]; added: string[]; removed: string[]; unchanged: string[]; changed: boolean };
+    photos: { from: Photo[]; to: Photo[]; added: Photo[]; removed: Photo[]; unchanged: Photo[]; changed: boolean };
+    reviews: Array<{ month: string; from: Review[]; to: Review[] }>;
+    price: { from: number | null; to: number | null; changed: boolean };
+    rating: { from: number | null; to: number | null; changed: boolean };
+    reviewCount: { from: number | null; to: number | null; changed: boolean };
+  };
+}
+
 interface SnapshotsState {
   snapshots: ListingSnapshot[];
-  comparison: any | null;
+  comparison: SnapshotComparison | null;
   loading: boolean;
   error: string | null;
 }
@@ -78,16 +92,16 @@ export const fetchSnapshots = createAsyncThunk(
     });
     if (start) params.append('start', start);
     if (end) params.append('end', end);
-    return api.get<{ data: ListingSnapshot[]; pagination: any }>(
+    return api.get<{ data: ListingSnapshot[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
       `/api/snapshots?${params.toString()}`,
     );
   },
 );
 
-export const compareSnapshots = createAsyncThunk(
+export const compareSnapshots = createAsyncThunk<SnapshotComparison, { fromId: string; toId: string }>(
   'snapshots/compareSnapshots',
-  async ({ fromId, toId }: { fromId: string; toId: string }) => {
-    return api.get(`/api/snapshots/compare/${fromId}/${toId}`);
+  async ({ fromId, toId }) => {
+    return api.get<SnapshotComparison>(`/api/snapshots/compare/${fromId}/${toId}`);
   },
 );
 

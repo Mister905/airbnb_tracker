@@ -13,6 +13,7 @@ import * as Dialog from '@radix-ui/react-dialog';
 import Button from '@/components/ui/Button';
 import { ProgressState, determineProgressState } from '@/lib/progressStates';
 import { formatDate, formatRelativeTime } from '@/lib/dateUtils';
+import { ScrapeRun } from '@/lib/store/snapshotsSlice';
 
 type SortField = 'url' | 'created_at' | 'last_scraped_at';
 type SortDirection = 'asc' | 'desc';
@@ -25,7 +26,7 @@ export default function DashboardContent() {
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
   const [scrapingUrlIds, setScrapingUrlIds] = useState<Set<string>>(new Set());
-  const [scrapeRuns, setScrapeRuns] = useState<Record<string, any[]>>({});
+  const [scrapeRuns, setScrapeRuns] = useState<Record<string, ScrapeRun[]>>({});
   const [isScrapingAll, setIsScrapingAll] = useState(false);
 
   useEffect(() => {
@@ -35,10 +36,10 @@ export default function DashboardContent() {
   // Fetch scrape runs for all URLs
   useEffect(() => {
     const fetchScrapeRuns = async () => {
-      const runs: Record<string, any[]> = {};
+      const runs: Record<string, ScrapeRun[]> = {};
       for (const url of trackedUrls) {
         try {
-          const status = await api.get(`/api/scrape-status/${url.id}`) as any[];
+          const status = await api.get<ScrapeRun[]>(`/api/scrape-status/${url.id}`);
           runs[url.id] = status || [];
         } catch (error) {
           console.error(`Failed to fetch scrape status for ${url.id}:`, error);
@@ -68,12 +69,13 @@ export default function DashboardContent() {
       setNewUrl('');
       setIsDialogOpen(false);
       dispatch(fetchTrackedUrls());
-    } catch (error: any) {
+    } catch (error) {
       console.error('Failed to add URL:', error);
-      const errorMessage = error?.message || error?.error || 'Unknown error';
+      const errorObj = error as { message?: string; error?: string; statusCode?: number };
+      const errorMessage = errorObj?.message || errorObj?.error || 'Unknown error';
       alert(`Failed to add URL: ${errorMessage}`);
       
-      if (error?.statusCode === 401) {
+      if (errorObj?.statusCode === 401) {
         localStorage.removeItem('backend_jwt');
         window.location.href = '/login';
       }
@@ -99,7 +101,7 @@ export default function DashboardContent() {
       // Poll for status
       const checkStatus = async () => {
         try {
-          const status = await api.get(`/api/scrape-status/${url.id}`) as any[];
+          const status = await api.get<ScrapeRun[]>(`/api/scrape-status/${url.id}`);
           const latest = status?.[0];
           
           if (latest && (latest.status === 'completed' || latest.status === 'failed')) {
@@ -133,15 +135,34 @@ export default function DashboardContent() {
     }
   };
 
+  // Helper to safely convert string status to union type
+  const normalizeScrapeStatus = (status: string | undefined): 'pending' | 'running' | 'completed' | 'failed' | undefined => {
+    if (!status) return undefined;
+    const validStatuses: readonly string[] = ['pending', 'running', 'completed', 'failed'];
+    if (validStatuses.includes(status)) {
+      return status as 'pending' | 'running' | 'completed' | 'failed';
+    }
+    return undefined;
+  };
+
   // Enhance TrackedUrl with computed fields
   const enhancedUrls: TrackedUrl[] = trackedUrls.map((url) => {
     const latestSnapshot = url.listing?.snapshots?.[0];
     const latestScrapeRun = scrapeRuns[url.id]?.[0];
     
+    // Determine scrape status with proper type
+    let scrapeStatus: 'pending' | 'running' | 'completed' | 'failed' | undefined = 'pending';
+    if (latestScrapeRun?.status) {
+      const normalized = normalizeScrapeStatus(latestScrapeRun.status);
+      scrapeStatus = normalized || 'pending';
+    } else if (latestSnapshot) {
+      scrapeStatus = 'completed';
+    }
+    
     return {
       ...url,
       promotional_title: url.listing?.title || undefined,
-      scrape_status: latestScrapeRun?.status || (latestSnapshot ? 'completed' : 'pending'),
+      scrape_status: scrapeStatus,
       last_scraped_at: latestSnapshot?.createdAt || latestScrapeRun?.completedAt || null,
     };
   });
@@ -189,7 +210,7 @@ export default function DashboardContent() {
         // Start polling for this URL
         const checkStatus = async () => {
           try {
-            const status = await api.get(`/api/scrape-status/${url.id}`) as any[];
+            const status = await api.get<ScrapeRun[]>(`/api/scrape-status/${url.id}`);
             const latest = status?.[0];
             
             if (latest && (latest.status === 'completed' || latest.status === 'failed')) {
@@ -291,8 +312,8 @@ export default function DashboardContent() {
   };
 
   const sortedUrls = [...enhancedUrls].sort((a, b) => {
-    let aValue: any;
-    let bValue: any;
+    let aValue: string | number | Date | null | undefined;
+    let bValue: string | number | Date | null | undefined;
 
     switch (sortField) {
       case 'url':
@@ -418,7 +439,7 @@ export default function DashboardContent() {
             color: 'var(--color-text-secondary)'
           }}>
             <p className="text-sm">
-              <strong style={{ color: 'var(--color-text-primary)' }}>Note:</strong> The <strong>Status</strong> column will show as "Pending" and the <strong>Listing Title</strong> column will be empty until you perform the initial scrape for each listing. Click "Scrape" on a listing or use "Scrape All" to get started.
+              <strong style={{ color: 'var(--color-text-primary)' }}>Note:</strong> The <strong>Status</strong> column will show as &quot;Pending&quot; and the <strong>Listing Title</strong> column will be empty until you perform the initial scrape for each listing. Click &quot;Scrape&quot; on a listing or use &quot;Scrape All&quot; to get started.
             </p>
           </div>
           <div className="card overflow-hidden">

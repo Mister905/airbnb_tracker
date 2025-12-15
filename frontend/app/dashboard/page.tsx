@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import AuthGuard from '@/components/auth/AuthGuard';
 import Navbar from '@/components/layout/Navbar';
 import DashboardContent from '@/components/dashboard/DashboardContent';

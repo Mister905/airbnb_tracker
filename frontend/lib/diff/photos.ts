@@ -22,7 +22,8 @@ export function diffPhotos(
   const moved: PhotoDiff["moved"] = [];
   const unchanged: PhotoDiff["unchanged"] = [];
 
-  for (const [imageId, newPhoto] of newMap.entries()) {
+  // Convert Map entries to array to avoid downlevelIteration requirement
+  for (const [imageId, newPhoto] of Array.from(newMap.entries())) {
     const oldPhoto = oldMap.get(imageId);
     if (!oldPhoto) {
       added.push({ url: newPhoto.url, imageId, newIndex: newPhoto.index });
@@ -38,7 +39,7 @@ export function diffPhotos(
     }
   }
 
-  for (const [imageId, oldPhoto] of oldMap.entries()) {
+  for (const [imageId, oldPhoto] of Array.from(oldMap.entries())) {
     if (!newMap.has(imageId)) {
       removed.push({ url: oldPhoto.url, imageId, oldIndex: oldPhoto.index });
     }

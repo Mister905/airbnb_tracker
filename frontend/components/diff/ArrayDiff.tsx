@@ -6,8 +6,8 @@ import Badge from '@/components/ui/Badge';
 import CollapsibleSection from './CollapsibleSection';
 
 interface ArrayDiffProps {
-  oldItems: string[] | any;
-  newItems: string[] | any;
+  oldItems: string[] | unknown;
+  newItems: string[] | unknown;
   fieldName?: string;
 }
 

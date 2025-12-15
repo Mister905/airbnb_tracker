@@ -1,4 +1,4 @@
-import { diff_match_patch, DIFF_DELETE, DIFF_INSERT, DIFF_EQUAL } from "diff-match-patch";
+import { diff_match_patch, DIFF_DELETE, DIFF_INSERT } from "diff-match-patch";
 
 const dmp = new diff_match_patch();
 

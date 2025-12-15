@@ -3,8 +3,7 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { fetchTrackedUrls } from '@/lib/store/listingsSlice';
-import { fetchSnapshots, compareSnapshots } from '@/lib/store/snapshotsSlice';
-import { api } from '@/lib/api';
+import { fetchSnapshots, compareSnapshots, Review } from '@/lib/store/snapshotsSlice';
 import * as Select from '@radix-ui/react-select';
 import * as Tabs from '@radix-ui/react-tabs';
 import DescriptionDiff from './DescriptionDiff';
@@ -16,7 +15,7 @@ import SummaryBanner from './SummaryBanner';
 export default function DiffToolContent() {
   const dispatch = useAppDispatch();
   const { trackedUrls } = useAppSelector((state) => state.listings);
-  const { snapshots, comparison, loading } = useAppSelector((state) => state.snapshots);
+  const { snapshots, comparison } = useAppSelector((state) => state.snapshots);
   const [selectedListingId, setSelectedListingId] = useState<string>('');
   const [fromSnapshotId, setFromSnapshotId] = useState<string>('');
   const [toSnapshotId, setToSnapshotId] = useState<string>('');
@@ -29,7 +28,7 @@ export default function DiffToolContent() {
 
   useEffect(() => {
     if (selectedListingId) {
-      dispatch(fetchSnapshots({ listingId: selectedListingId, startDate, endDate }));
+      dispatch(fetchSnapshots({ listingId: selectedListingId, start: startDate, end: endDate }));
     }
   }, [selectedListingId, startDate, endDate, dispatch]);
 
@@ -39,18 +38,22 @@ export default function DiffToolContent() {
     }
   }, [fromSnapshotId, toSnapshotId, dispatch]);
 
-  const selectedListing = trackedUrls.find((u) => u.listing?.id === selectedListingId);
-
   // Flatten reviews from grouped format to arrays for ReviewDiff
   const { oldReviews, newReviews } = useMemo(() => {
     if (!comparison?.diffs?.reviews) {
       return { oldReviews: [], newReviews: [] };
     }
     
-    const old: any[] = [];
-    const new_: any[] = [];
+    interface MonthData {
+      month: string;
+      from: Review[];
+      to: Review[];
+    }
     
-    comparison.diffs.reviews.forEach((monthData: any) => {
+    const old: Review[] = [];
+    const new_: Review[] = [];
+    
+    comparison.diffs.reviews.forEach((monthData: MonthData) => {
       old.push(...(monthData.from || []));
       new_.push(...(monthData.to || []));
     });

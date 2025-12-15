@@ -16,7 +16,7 @@
  * @param amenities - Raw amenities data (can be string[], string, object[], null, undefined, or any)
  * @returns Normalized array of amenity strings
  */
-export function normalizeAmenities(amenities: any): string[] {
+export function normalizeAmenities(amenities: unknown): string[] {
   // Handle null/undefined
   if (amenities == null) {
     return [];
@@ -60,7 +60,7 @@ export function normalizeAmenities(amenities: any): string[] {
       // If parsed to something else, return empty
       console.warn('[Amenities] Parsed JSON is not an array or string:', parsed);
       return [];
-    } catch (e) {
+    } catch {
       // Not valid JSON - might be a comma-separated string
       // Try splitting by comma as fallback
       return amenities

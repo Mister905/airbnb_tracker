@@ -50,9 +50,25 @@ async function fetchWithAuth(
 ): Promise<Response> {
   const token = await getAuthToken();
   
-  const headers: HeadersInit = {
+  // Convert options.headers to a plain object if needed
+  const existingHeaders: Record<string, string> = {};
+  if (options.headers) {
+    if (options.headers instanceof Headers) {
+      options.headers.forEach((value, key) => {
+        existingHeaders[key] = value;
+      });
+    } else if (Array.isArray(options.headers)) {
+      options.headers.forEach(([key, value]) => {
+        existingHeaders[key] = value;
+      });
+    } else {
+      Object.assign(existingHeaders, options.headers);
+    }
+  }
+  
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
+    ...existingHeaders,
   };
 
   if (token) {
@@ -89,7 +105,7 @@ export const api = {
     return response.json();
   },
 
-  async post<T>(endpoint: string, data?: any): Promise<T> {
+  async post<T>(endpoint: string, data?: unknown): Promise<T> {
     const response = await fetchWithAuth(endpoint, {
       method: 'POST',
       body: JSON.stringify(data),
@@ -97,7 +113,7 @@ export const api = {
     return response.json();
   },
 
-  async patch<T>(endpoint: string, data?: any): Promise<T> {
+  async patch<T>(endpoint: string, data?: unknown): Promise<T> {
     const response = await fetchWithAuth(endpoint, {
       method: 'PATCH',
       body: JSON.stringify(data),

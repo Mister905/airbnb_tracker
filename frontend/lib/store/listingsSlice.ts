@@ -1,5 +1,6 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { api } from '../api';
+import { ListingSnapshot } from './snapshotsSlice';
 
 export interface TrackedUrl {
   id: string;
@@ -79,7 +80,7 @@ export const deleteTrackedUrl = createAsyncThunk(
 export const fetchListings = createAsyncThunk(
   'listings/fetchListings',
   async ({ page = 1, limit = 50 }: { page?: number; limit?: number } = {}) => {
-    return api.get<{ data: Listing[]; pagination: any }>(
+    return api.get<{ data: Listing[]; pagination: { page: number; limit: number; total: number; totalPages: number } }>(
       `/api/listings?page=${page}&limit=${limit}`,
     );
   },
