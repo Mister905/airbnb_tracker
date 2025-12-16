@@ -42,7 +42,8 @@ Airbnb listings change frequently—prices fluctuate, amenities are added or rem
 - **Next.js 14** (App Router) - React framework with server-side rendering
 - **TypeScript** - Type-safe development
 - **SCSS** - Global theming system with CSS custom properties (dark mode default)
-- **Radix UI** - Accessible, unstyled component primitives
+- **Headless UI** - Accessible, unstyled component primitives for dropdowns and interactive elements
+- **Tailwind CSS** - Utility-first CSS framework for styling
 - **Redux Toolkit** - State management for listings and snapshots
 - **Supabase JS** - Authentication client
 

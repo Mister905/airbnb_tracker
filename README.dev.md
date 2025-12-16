@@ -4,6 +4,24 @@ Technical reference and implementation guide for the Airbnb Tracker application.
 
 ## Architecture Overview
 
+### UI Component Library
+
+The application uses **Headless UI** for dropdowns and selection components. This provides:
+- Accessible, keyboard-navigable components out of the box
+- No portals (components render inline in the DOM)
+- Full control over styling via Tailwind CSS
+- Simple, inspectable DOM structure
+
+**Components**:
+- `Listbox` - Used for all selection dropdowns (listing selection, snapshot selection)
+- `Dialog` - Used for modals (e.g., "Add Listing URL" dialog)
+- Simple state-based tabs - Replaces Radix UI Tabs with React state management
+
+**Styling**:
+- Tailwind CSS utilities for layout and responsive design
+- Custom CSS classes for hover/focus states (e.g., `listbox-option` with `#009F3D` outline)
+- SCSS for global theming and component-level styles
+
 ### Frontend (`frontend/`)
 
 **Framework**: Next.js 14 with App Router
@@ -19,10 +37,15 @@ Technical reference and implementation guide for the Airbnb Tracker application.
   - `lib/store/snapshotsSlice.ts` - Snapshots and comparisons
   - `lib/store/authSlice.ts` - Authentication state
 - **API Client**: `lib/api.ts` - Authenticated fetch wrapper with token management
+- **UI Components**: Headless UI for accessible dropdowns and interactive elements
+  - `Listbox` component for selection dropdowns
+  - `Dialog` component for modals
+  - Simple state-based tabs implementation
 - **Styling**: SCSS with global theme system (`styles/_theme.scss`, `styles/_components.scss`)
   - CSS custom properties for theming
   - Dark mode as default
   - Component-level SCSS classes
+  - Tailwind CSS utilities for layout and styling
 
 ### Backend (`backend/`)
 

@@ -4,8 +4,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { useAppDispatch, useAppSelector } from '@/lib/hooks';
 import { fetchTrackedUrls } from '@/lib/store/listingsSlice';
 import { fetchSnapshots, compareSnapshots, Review } from '@/lib/store/snapshotsSlice';
-import * as Select from '@radix-ui/react-select';
-import * as Tabs from '@radix-ui/react-tabs';
+import { Listbox } from '@headlessui/react';
 import DescriptionDiff from './DescriptionDiff';
 import ArrayDiff from './ArrayDiff';
 import PhotoDiff from './PhotoDiff';
@@ -21,6 +20,7 @@ export default function DiffToolContent() {
   const [toSnapshotId, setToSnapshotId] = useState<string>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [activeTab, setActiveTab] = useState('description');
 
   useEffect(() => {
     dispatch(fetchTrackedUrls());
@@ -45,48 +45,6 @@ export default function DiffToolContent() {
       setToSnapshotId('');
     }
   }, [selectedListingId]);
-
-  // Simple effect to remove outline: none that Radix might set, letting CSS handle the rest
-  useEffect(() => {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.type === 'attributes' && mutation.attributeName === 'data-highlighted') {
-          const target = mutation.target as HTMLElement;
-          if (target.hasAttribute('data-highlighted') && target.style.outline === 'none') {
-            // Remove outline: none to let CSS apply
-            target.style.removeProperty('outline');
-          }
-        }
-      });
-    });
-
-    const observeItems = () => {
-      const selectItems = document.querySelectorAll('[data-radix-select-item]');
-      selectItems.forEach((item) => {
-        observer.observe(item, { 
-          attributes: true, 
-          attributeFilter: ['data-highlighted']
-        });
-      });
-    };
-
-    observeItems();
-
-    // Re-observe when dropdown opens
-    const contentObserver = new MutationObserver(() => {
-      observeItems();
-    });
-
-    const selectContent = document.querySelector('[data-radix-select-content]');
-    if (selectContent) {
-      contentObserver.observe(selectContent, { childList: true, subtree: true });
-    }
-
-    return () => {
-      observer.disconnect();
-      contentObserver.disconnect();
-    };
-  }, [trackedUrls, snapshots]);
 
   // Flatten reviews from grouped format to arrays for ReviewDiff
   const { oldReviews, newReviews } = useMemo(() => {
@@ -146,6 +104,44 @@ export default function DiffToolContent() {
     return parts.length > 0 ? parts.join(', ') : 'No changes detected';
   }, [comparison]);
 
+  // Get listing options
+  const listingOptions = useMemo(() => {
+    return trackedUrls
+      .filter((u) => u.listing)
+      .map((url) => ({
+        id: url.listing!.id,
+        label: url.listing?.title || url.url,
+      }));
+  }, [trackedUrls]);
+
+  // Get selected listing display text
+  const selectedListingText = useMemo(() => {
+    if (!selectedListingId) return 'Choose a listing...';
+    const option = listingOptions.find((opt) => opt.id === selectedListingId);
+    return option?.label || 'Choose a listing...';
+  }, [selectedListingId, listingOptions]);
+
+  // Get snapshot options
+  const snapshotOptions = useMemo(() => {
+    return snapshots.map((snapshot) => ({
+      id: snapshot.id,
+      label: `Version ${snapshot.version} - ${new Date(snapshot.createdAt).toLocaleDateString()}`,
+    }));
+  }, [snapshots]);
+
+  // Get selected snapshot display texts
+  const selectedFromSnapshotText = useMemo(() => {
+    if (!fromSnapshotId) return 'Choose snapshot...';
+    const option = snapshotOptions.find((opt) => opt.id === fromSnapshotId);
+    return option?.label || 'Choose snapshot...';
+  }, [fromSnapshotId, snapshotOptions]);
+
+  const selectedToSnapshotText = useMemo(() => {
+    if (!toSnapshotId) return 'Choose snapshot...';
+    const option = snapshotOptions.find((opt) => opt.id === toSnapshotId);
+    return option?.label || 'Choose snapshot...';
+  }, [toSnapshotId, snapshotOptions]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl heading-primary mb-8">Diff Tool</h1>
@@ -157,32 +153,36 @@ export default function DiffToolContent() {
             <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
               Select Listing
             </label>
-            <Select.Root value={selectedListingId} onValueChange={setSelectedListingId}>
-              <Select.Trigger className="input w-full">
-                <Select.Value placeholder="Choose a listing..." />
-              </Select.Trigger>
-              <Select.Portal>
-                <Select.Content className="card border rounded-md shadow-lg" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-                  <Select.Viewport>
-                    {trackedUrls
-                      .filter((u) => u.listing)
-                      .map((url) => {
-                        const displayText = url.listing?.title || url.url;
-                        return (
-                          <Select.Item
-                            key={url.listing!.id}
-                            value={url.listing!.id}
-                            className="px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none"
-                            style={{ outline: 'none' }}
-                          >
-                            <Select.ItemText style={{ color: 'var(--color-text-primary)' }}>{displayText}</Select.ItemText>
-                          </Select.Item>
-                        );
-                      })}
-                  </Select.Viewport>
-                </Select.Content>
-              </Select.Portal>
-            </Select.Root>
+            <Listbox value={selectedListingId} onChange={setSelectedListingId}>
+              <div className="relative">
+                <Listbox.Button className="input w-full text-left">
+                  <span style={{ color: selectedListingId ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                    {selectedListingText}
+                  </span>
+                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </span>
+                </Listbox.Button>
+                <Listbox.Options className="absolute z-10 mt-1 w-full card border rounded-md shadow-lg max-h-60 overflow-auto" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                  {listingOptions.map((option) => (
+                    <Listbox.Option
+                      key={option.id}
+                      value={option.id}
+                      className={({ active }) =>
+                        `px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none listbox-option ${
+                          active ? 'bg-opacity-20' : ''
+                        }`
+                      }
+                      style={{ color: 'var(--color-text-primary)' }}
+                    >
+                      {option.label}
+                    </Listbox.Option>
+                  ))}
+                </Listbox.Options>
+              </div>
+            </Listbox>
           </div>
 
           {/* From Snapshot and To Snapshot - Side by Side Row */}
@@ -192,58 +192,72 @@ export default function DiffToolContent() {
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                   From Snapshot
                 </label>
-                <Select.Root value={fromSnapshotId} onValueChange={setFromSnapshotId}>
-                  <Select.Trigger className="input w-full">
-                    <Select.Value placeholder="Choose snapshot..." />
-                  </Select.Trigger>
-                  <Select.Portal>
-                    <Select.Content className="card border rounded-md shadow-lg" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-                      <Select.Viewport>
-                        {snapshots.map((snapshot) => (
-                          <Select.Item
-                            key={snapshot.id}
-                            value={snapshot.id}
-                            className="px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none"
-                            style={{ outline: 'none' }}
-                          >
-                            <Select.ItemText style={{ color: 'var(--color-text-primary)' }}>
-                              Version {snapshot.version} - {new Date(snapshot.createdAt).toLocaleDateString()}
-                            </Select.ItemText>
-                          </Select.Item>
-                        ))}
-                      </Select.Viewport>
-                    </Select.Content>
-                  </Select.Portal>
-                </Select.Root>
+                <Listbox value={fromSnapshotId} onChange={setFromSnapshotId}>
+                  <div className="relative">
+                    <Listbox.Button className="input w-full text-left">
+                      <span style={{ color: fromSnapshotId ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                        {selectedFromSnapshotText}
+                      </span>
+                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </span>
+                    </Listbox.Button>
+                    <Listbox.Options className="absolute z-10 mt-1 w-full card border rounded-md shadow-lg max-h-60 overflow-auto" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                      {snapshotOptions.map((option) => (
+                        <Listbox.Option
+                          key={option.id}
+                          value={option.id}
+                          className={({ active }) =>
+                            `px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none listbox-option ${
+                              active ? 'bg-opacity-20' : ''
+                            }`
+                          }
+                          style={{ color: 'var(--color-text-primary)' }}
+                        >
+                          {option.label}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </div>
+                </Listbox>
               </div>
 
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: 'var(--color-text-secondary)' }}>
                   To Snapshot
                 </label>
-                <Select.Root value={toSnapshotId} onValueChange={setToSnapshotId}>
-                  <Select.Trigger className="input w-full">
-                    <Select.Value placeholder="Choose snapshot..." />
-                  </Select.Trigger>
-                  <Select.Portal>
-                    <Select.Content className="card border rounded-md shadow-lg" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
-                      <Select.Viewport>
-                        {snapshots.map((snapshot) => (
-                          <Select.Item
-                            key={snapshot.id}
-                            value={snapshot.id}
-                            className="px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none"
-                            style={{ outline: 'none' }}
-                          >
-                            <Select.ItemText style={{ color: 'var(--color-text-primary)' }}>
-                              Version {snapshot.version} - {new Date(snapshot.createdAt).toLocaleDateString()}
-                            </Select.ItemText>
-                          </Select.Item>
-                        ))}
-                      </Select.Viewport>
-                    </Select.Content>
-                  </Select.Portal>
-                </Select.Root>
+                <Listbox value={toSnapshotId} onChange={setToSnapshotId}>
+                  <div className="relative">
+                    <Listbox.Button className="input w-full text-left">
+                      <span style={{ color: toSnapshotId ? 'var(--color-text-primary)' : 'var(--color-text-secondary)' }}>
+                        {selectedToSnapshotText}
+                      </span>
+                      <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </span>
+                    </Listbox.Button>
+                    <Listbox.Options className="absolute z-10 mt-1 w-full card border rounded-md shadow-lg max-h-60 overflow-auto" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+                      {snapshotOptions.map((option) => (
+                        <Listbox.Option
+                          key={option.id}
+                          value={option.id}
+                          className={({ active }) =>
+                            `px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none listbox-option ${
+                              active ? 'bg-opacity-20' : ''
+                            }`
+                          }
+                          style={{ color: 'var(--color-text-primary)' }}
+                        >
+                          {option.label}
+                        </Listbox.Option>
+                      ))}
+                    </Listbox.Options>
+                  </div>
+                </Listbox>
               </div>
             </div>
           )}
@@ -284,68 +298,88 @@ export default function DiffToolContent() {
             <SummaryBanner summaryText={summaryText} />
           </div>
 
-          <Tabs.Root defaultValue="description" className="w-full">
-            <Tabs.List className="flex border-b" style={{ borderColor: 'var(--color-border)' }}>
-              <Tabs.Trigger
-                value="description"
-                className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 transition-colors"
-                style={{ color: 'var(--color-text-secondary)' }}
+          {/* Simple Tabs Implementation */}
+          <div className="w-full">
+            <div className="flex border-b" style={{ borderColor: 'var(--color-border)' }}>
+              <button
+                onClick={() => setActiveTab('description')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'description' ? 'border-b-2' : ''
+                }`}
+                style={{
+                  color: activeTab === 'description' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  borderBottomColor: activeTab === 'description' ? 'var(--color-primary)' : 'transparent',
+                }}
               >
                 Description
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                value="amenities"
-                className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 transition-colors"
-                style={{ color: 'var(--color-text-secondary)' }}
+              </button>
+              <button
+                onClick={() => setActiveTab('amenities')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'amenities' ? 'border-b-2' : ''
+                }`}
+                style={{
+                  color: activeTab === 'amenities' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  borderBottomColor: activeTab === 'amenities' ? 'var(--color-primary)' : 'transparent',
+                }}
               >
                 Amenities
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                value="photos"
-                className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 transition-colors"
-                style={{ color: 'var(--color-text-secondary)' }}
+              </button>
+              <button
+                onClick={() => setActiveTab('photos')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'photos' ? 'border-b-2' : ''
+                }`}
+                style={{
+                  color: activeTab === 'photos' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  borderBottomColor: activeTab === 'photos' ? 'var(--color-primary)' : 'transparent',
+                }}
               >
                 Photos
-              </Tabs.Trigger>
-              <Tabs.Trigger
-                value="reviews"
-                className="px-4 py-2 text-sm font-medium data-[state=active]:border-b-2 transition-colors"
-                style={{ color: 'var(--color-text-secondary)' }}
+              </button>
+              <button
+                onClick={() => setActiveTab('reviews')}
+                className={`px-4 py-2 text-sm font-medium transition-colors ${
+                  activeTab === 'reviews' ? 'border-b-2' : ''
+                }`}
+                style={{
+                  color: activeTab === 'reviews' ? 'var(--color-primary)' : 'var(--color-text-secondary)',
+                  borderBottomColor: activeTab === 'reviews' ? 'var(--color-primary)' : 'transparent',
+                }}
               >
                 Reviews
-              </Tabs.Trigger>
-            </Tabs.List>
+              </button>
+            </div>
 
-            <Tabs.Content value="description" className="mt-4">
-              <DescriptionDiff
-                oldText={comparison.from.description || ''}
-                newText={comparison.to.description || ''}
-              />
-            </Tabs.Content>
-
-            <Tabs.Content value="amenities" className="mt-4">
-              <ArrayDiff
-                oldItems={comparison.diffs.amenities.from || []}
-                newItems={comparison.diffs.amenities.to || []}
-                fieldName="Amenities"
-              />
-            </Tabs.Content>
-
-            <Tabs.Content value="photos" className="mt-4">
-              <PhotoDiff
-                oldPhotos={comparison.from.photos || []}
-                newPhotos={comparison.to.photos || []}
-              />
-            </Tabs.Content>
-
-            <Tabs.Content value="reviews" className="mt-4">
-              <ReviewDiff
-                oldReviews={oldReviews}
-                newReviews={newReviews}
-                showUnchangedReviews={true}
-              />
-            </Tabs.Content>
-          </Tabs.Root>
+            <div className="mt-4">
+              {activeTab === 'description' && (
+                <DescriptionDiff
+                  oldText={comparison.from.description || ''}
+                  newText={comparison.to.description || ''}
+                />
+              )}
+              {activeTab === 'amenities' && (
+                <ArrayDiff
+                  oldItems={comparison.diffs.amenities.from || []}
+                  newItems={comparison.diffs.amenities.to || []}
+                  fieldName="Amenities"
+                />
+              )}
+              {activeTab === 'photos' && (
+                <PhotoDiff
+                  oldPhotos={comparison.from.photos || []}
+                  newPhotos={comparison.to.photos || []}
+                />
+              )}
+              {activeTab === 'reviews' && (
+                <ReviewDiff
+                  oldReviews={oldReviews}
+                  newReviews={newReviews}
+                  showUnchangedReviews={true}
+                />
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>

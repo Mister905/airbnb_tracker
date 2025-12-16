@@ -320,66 +320,22 @@ h3, .heading-tertiary {
 }
 
 // ----------------------------------------------------------------------------
-// RADIX UI COMPONENTS
+// HEADLESS UI COMPONENTS
 // ----------------------------------------------------------------------------
 
-// Select/Dropdown
-[data-radix-select-content] {
-  background-color: var(--color-surface) !important;
-  border: 1px solid var(--color-border) !important;
-  color: var(--color-text-primary) !important;
-}
-
-// Select item - minimal styling to let Radix UI work, only add focus outline
-[data-radix-select-item] {
-  color: var(--color-text-primary);
-  
-  // Apply visible border/outline on hover or focus
+// Listbox option - visible outline on hover and focus
+.listbox-option {
   &:hover,
-  &:focus,
-  &[data-highlighted] {
+  &:focus {
     outline: 2px solid #009F3D;
     outline-offset: 2px;
   }
-}
-
-// Ensure focus guard doesn't interfere with our styles
-[data-radix-focus-guard] {
-  outline: none !important;
-  pointer-events: none !important;
-}
-
-[data-radix-select-trigger] {
-  background-color: var(--color-surface) !important;
-  border: 1px solid var(--color-border) !important;
-  color: var(--color-text-primary) !important;
-}
-
-// Dialog/Modal
-[data-radix-dialog-overlay] {
-  background-color: rgba(0, 0, 0, 0.5) !important;
-}
-
-[data-radix-dialog-content] {
-  background-color: var(--color-surface) !important;
-  color: var(--color-text-primary) !important;
-}
-
-// Tabs
-[data-radix-tabs-trigger] {
-  color: var(--color-text-secondary) !important;
   
-  &:hover {
-    color: var(--color-text-primary) !important;
-  }
-  
-  &[data-state="active"] {
-    color: var(--color-primary) !important;
-    border-bottom-color: var(--color-primary) !important;
+  &[aria-selected="true"] {
+    &:hover,
+    &:focus {
+      outline: 2px solid #009F3D;
+      outline-offset: 2px;
+    }
   }
 }
-
-[data-radix-tabs-content] {
-  color: var(--color-text-primary) !important;
-}
-

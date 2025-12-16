@@ -9,7 +9,7 @@ import {
   TrackedUrl,
 } from '@/lib/store/listingsSlice';
 import { api } from '@/lib/api';
-import * as Dialog from '@radix-ui/react-dialog';
+import { Dialog } from '@headlessui/react';
 import Button from '@/components/ui/Button';
 import { ProgressState, determineProgressState } from '@/lib/progressStates';
 import { formatDate, formatRelativeTime } from '@/lib/dateUtils';
@@ -22,6 +22,7 @@ export default function DashboardContent() {
   const dispatch = useAppDispatch();
   const { trackedUrls, loading } = useAppSelector((state) => state.listings);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isScrapeAllDialogOpen, setIsScrapeAllDialogOpen] = useState(false);
   const [newUrl, setNewUrl] = useState('');
   const [sortField, setSortField] = useState<SortField>('created_at');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -185,10 +186,6 @@ export default function DashboardContent() {
 
     if (urlsToScrape.length === 0) {
       alert('No enabled URLs available to scrape, or all URLs are already being scraped');
-      return;
-    }
-
-    if (!confirm(`Start scraping ${urlsToScrape.length} listing${urlsToScrape.length > 1 ? 's' : ''}?`)) {
       return;
     }
 
@@ -366,58 +363,106 @@ export default function DashboardContent() {
           {enhancedUrls.length > 0 && (
             <Button
               variant="secondary"
-              onClick={handleScrapeAll}
+              onClick={() => setIsScrapeAllDialogOpen(true)}
               disabled={isScrapingAll || scrapingUrlIds.size > 0 || enabledUrlsCount === 0}
             >
               {isScrapingAll ? 'Scraping All...' : `Scrape All (${enabledUrlsCount})`}
             </Button>
           )}
-          <Dialog.Root open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <Dialog.Trigger asChild>
-              <Button variant="primary">Add Listing URL</Button>
-            </Dialog.Trigger>
-          <Dialog.Portal>
-            <Dialog.Overlay className="fixed inset-0" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }} />
-            <Dialog.Content className="card fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 p-6 w-full max-w-md">
-              <Dialog.Title className="text-xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
-                Add New Listing URL
-              </Dialog.Title>
-              <div className="space-y-4">
-                <input
-                  type="url"
-                  placeholder="https://www.airbnb.com/rooms/..."
-                  value={newUrl}
-                  onChange={(e) => setNewUrl(e.target.value)}
-                  className="input w-full"
-                  required
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddUrl();
-                    }
-                  }}
-                />
-                <div className="flex justify-end space-x-2">
-                  <Dialog.Close asChild>
-                    <Button variant="secondary" type="button">Cancel</Button>
-                  </Dialog.Close>
-                  <Button
-                    type="button"
-                    variant="primary"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleAddUrl();
+          <Button variant="primary" onClick={() => setIsDialogOpen(true)}>
+            Add Listing URL
+          </Button>
+          
+          <Dialog open={isDialogOpen} onClose={() => setIsDialogOpen(false)} className="relative z-50">
+            <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+            
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+              <Dialog.Panel className="card w-full max-w-md p-6" style={{ backgroundColor: 'var(--color-surface)' }}>
+                <Dialog.Title className="text-xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+                  Add New Listing URL
+                </Dialog.Title>
+                <div className="space-y-4">
+                  <input
+                    type="url"
+                    placeholder="https://www.airbnb.com/rooms/..."
+                    value={newUrl}
+                    onChange={(e) => setNewUrl(e.target.value)}
+                    className="input w-full"
+                    required
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleAddUrl();
+                      }
                     }}
-                  >
-                    Add
-                  </Button>
+                  />
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      onClick={() => setIsDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleAddUrl();
+                      }}
+                    >
+                      Add
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </Dialog.Content>
-          </Dialog.Portal>
-        </Dialog.Root>
+              </Dialog.Panel>
+            </div>
+          </Dialog>
+
+          {/* Scrape All Confirmation Dialog */}
+          <Dialog open={isScrapeAllDialogOpen} onClose={() => setIsScrapeAllDialogOpen(false)} className="relative z-50">
+            <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
+            
+            <div className="fixed inset-0 flex items-center justify-center p-4">
+              <Dialog.Panel className="card w-full max-w-md p-6" style={{ backgroundColor: 'var(--color-surface)' }}>
+                <Dialog.Title className="text-xl font-bold mb-4" style={{ color: 'var(--color-text-primary)' }}>
+                  Scrape All Listings
+                </Dialog.Title>
+                <div className="space-y-4">
+                  <p style={{ color: 'var(--color-text-secondary)' }}>
+                    {(() => {
+                      const urlsToScrape = enhancedUrls.filter(
+                        (url) => url.enabled && !scrapingUrlIds.has(url.id)
+                      );
+                      return `Start scraping ${urlsToScrape.length} listing${urlsToScrape.length !== 1 ? 's' : ''}?`;
+                    })()}
+                  </p>
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="secondary"
+                      type="button"
+                      onClick={() => setIsScrapeAllDialogOpen(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="primary"
+                      onClick={() => {
+                        setIsScrapeAllDialogOpen(false);
+                        handleScrapeAll();
+                      }}
+                    >
+                      Start Scraping
+                    </Button>
+                  </div>
+                </div>
+              </Dialog.Panel>
+            </div>
+          </Dialog>
         </div>
       </div>
 
