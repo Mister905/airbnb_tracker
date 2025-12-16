@@ -1,13 +1,12 @@
 import { IngestionService } from './ingestion.service';
+import { IngestDto } from './dto/ingest.dto';
 export declare class IngestionController {
     private readonly ingestionService;
     constructor(ingestionService: IngestionService);
-    ingest(req: any, body: {
-        trackedUrlId: string;
-        data: any[];
-        scrapeRunId: string;
-    }): Promise<{
+    ingest(req: any, dto: IngestDto): Promise<{
         id: string;
+        createdAt: Date;
+        listingId: string;
         version: number;
         description: string | null;
         amenities: import("@prisma/client/runtime/library").JsonValue | null;
@@ -15,7 +14,5 @@ export declare class IngestionController {
         currency: string | null;
         rating: number | null;
         reviewCount: number | null;
-        createdAt: Date;
-        listingId: string;
     }>;
 }

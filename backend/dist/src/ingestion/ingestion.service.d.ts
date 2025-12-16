@@ -48,9 +48,12 @@ interface ApifyListingData {
 }
 export declare class IngestionService {
     private prisma;
+    private readonly logger;
     constructor(prisma: PrismaService);
     ingestData(trackedUrlId: string, userId: string, data: ApifyListingData[], scrapeRunId: string): Promise<{
         id: string;
+        createdAt: Date;
+        listingId: string;
         version: number;
         description: string | null;
         amenities: import("@prisma/client/runtime/library").JsonValue | null;
@@ -58,8 +61,6 @@ export declare class IngestionService {
         currency: string | null;
         rating: number | null;
         reviewCount: number | null;
-        createdAt: Date;
-        listingId: string;
     }>;
 }
 export {};

@@ -8,28 +8,23 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var IngestionService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.IngestionService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-let IngestionService = class IngestionService {
+let IngestionService = IngestionService_1 = class IngestionService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.logger = new common_1.Logger(IngestionService_1.name);
     }
     async ingestData(trackedUrlId, userId, data, scrapeRunId) {
         if (!data || data.length === 0) {
-            console.log('[Ingestion] No data provided to ingest');
+            this.logger.warn('No data provided to ingest');
             return;
         }
-        console.log(`[Ingestion] Processing ${data.length} item(s) from Apify`);
+        this.logger.log(`Processing ${data.length} item(s) from Apify`);
         const listingData = data[0];
-        console.log('[Ingestion] Data keys:', Object.keys(listingData));
-        if (listingData.photos) {
-            console.log('[Ingestion] Photos found:', Array.isArray(listingData.photos) ? listingData.photos.length : 'not an array');
-        }
-        if (listingData.reviews) {
-            console.log('[Ingestion] Reviews found:', Array.isArray(listingData.reviews) ? listingData.reviews.length : 'not an array');
-        }
         let listing = await this.prisma.listing.findUnique({
             where: { trackedUrlId },
         });
@@ -151,7 +146,6 @@ let IngestionService = class IngestionService {
         else if (Array.isArray(listingData.amenities)) {
             normalizedAmenities = listingData.amenities;
         }
-        console.log(`[Ingestion] Extracted ${normalizedAmenities.length} amenities from nested structure`);
         const snapshot = await this.prisma.listingSnapshot.create({
             data: {
                 listingId: listing.id,
@@ -184,7 +178,7 @@ let IngestionService = class IngestionService {
             photos = listingData.photoUrls;
         }
         if (photos.length > 0) {
-            console.log(`[Ingestion] Processing ${photos.length} photos for listing ${listing.id}`);
+            this.logger.debug(`Processing ${photos.length} photos for listing ${listing.id}`);
             await Promise.all(photos.map((photo, index) => {
                 let photoUrl = null;
                 let photoCaption = null;
@@ -197,7 +191,7 @@ let IngestionService = class IngestionService {
                     photoCaption = photoObj.caption || photoObj.alt || photoObj.title || photoObj.description || null;
                 }
                 if (!photoUrl) {
-                    console.warn(`[Ingestion] Skipping photo at index ${index} - no URL found:`, photo);
+                    this.logger.warn(`Skipping photo at index ${index} - no URL found`);
                     return Promise.resolve(null);
                 }
                 return this.prisma.photo.create({
@@ -211,15 +205,9 @@ let IngestionService = class IngestionService {
                 });
             }));
         }
-        else {
-            console.log(`[Ingestion] No photos found in data. Available keys:`, Object.keys(listingData));
-            if (listingData.images) {
-                console.log(`[Ingestion] images field exists but is not an array:`, typeof listingData.images, listingData.images);
-            }
-        }
         const reviews = listingData.reviews || listingData.reviewsList || listingData.reviewList || [];
         if (Array.isArray(reviews) && reviews.length > 0) {
-            console.log(`[Ingestion] Processing ${reviews.length} reviews for listing ${listing.id}`);
+            this.logger.debug(`Processing ${reviews.length} reviews for listing ${listing.id}`);
             await Promise.all(reviews.map((review) => {
                 let reviewerName = null;
                 const reviewerObj = review.reviewer;
@@ -285,10 +273,9 @@ let IngestionService = class IngestionService {
                     (reviewerObj && typeof reviewerObj === 'object' ? reviewerObj.avatar || reviewerObj.avatarUrl : null) ||
                     null;
                 if (!reviewId) {
-                    console.warn(`[Ingestion] Skipping review - no ID found:`, review);
+                    this.logger.warn(`Skipping review - no ID found`);
                     return Promise.resolve(null);
                 }
-                console.log(`[Ingestion] Processing review: id=${reviewId}, author=${reviewerName}, rating=${rating}, hasComment=${!!comment}, date=${date}`);
                 return this.prisma.review.upsert({
                     where: { reviewId },
                     create: {
@@ -309,14 +296,11 @@ let IngestionService = class IngestionService {
                 });
             }));
         }
-        else {
-            console.log(`[Ingestion] No reviews found in data. Available keys:`, Object.keys(listingData));
-        }
         return snapshot;
     }
 };
 exports.IngestionService = IngestionService;
-exports.IngestionService = IngestionService = __decorate([
+exports.IngestionService = IngestionService = IngestionService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], IngestionService);

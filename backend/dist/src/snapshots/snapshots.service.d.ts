@@ -1,6 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service';
 export declare class SnapshotsService {
     private prisma;
+    private readonly logger;
     constructor(prisma: PrismaService);
     findAllSnapshots(listingId: string, userId: string, page?: number, limit?: number, startDate?: Date, endDate?: Date): Promise<{
         data: ({

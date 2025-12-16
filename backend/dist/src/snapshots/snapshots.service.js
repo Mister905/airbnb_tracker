@@ -8,13 +8,15 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
+var SnapshotsService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.SnapshotsService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../prisma/prisma.service");
-let SnapshotsService = class SnapshotsService {
+let SnapshotsService = SnapshotsService_1 = class SnapshotsService {
     constructor(prisma) {
         this.prisma = prisma;
+        this.logger = new common_1.Logger(SnapshotsService_1.name);
     }
     async findAllSnapshots(listingId, userId, page = 1, limit = 50, startDate, endDate) {
         const listing = await this.prisma.listing.findFirst({
@@ -41,7 +43,14 @@ let SnapshotsService = class SnapshotsService {
         }
         const [snapshots, total] = await Promise.all([
             this.prisma.listingSnapshot.findMany({
-                where,
+                where: {
+                    ...where,
+                    listing: {
+                        trackedUrl: {
+                            userId,
+                        },
+                    },
+                },
                 include: {
                     photos: {
                         orderBy: { order: 'asc' },
@@ -55,7 +64,16 @@ let SnapshotsService = class SnapshotsService {
                 take: Math.min(limit, 300),
                 orderBy: { createdAt: 'desc' },
             }),
-            this.prisma.listingSnapshot.count({ where }),
+            this.prisma.listingSnapshot.count({
+                where: {
+                    ...where,
+                    listing: {
+                        trackedUrl: {
+                            userId,
+                        },
+                    },
+                },
+            }),
         ]);
         return {
             data: snapshots,
@@ -105,9 +123,7 @@ let SnapshotsService = class SnapshotsService {
         if (fromSnapshot.listingId !== toSnapshot.listingId) {
             throw new common_1.BadRequestException('Snapshots must be from the same listing');
         }
-        console.log(`[Snapshots] Comparing snapshots: from=${fromId}, to=${toId}`);
-        console.log(`[Snapshots] From snapshot has ${fromSnapshot.reviews?.length || 0} reviews`);
-        console.log(`[Snapshots] To snapshot has ${toSnapshot.reviews?.length || 0} reviews`);
+        this.logger.debug(`Comparing snapshots: from=${fromId}, to=${toId}`);
         const descriptionDiff = this.compareText(fromSnapshot.description || '', toSnapshot.description || '');
         const amenitiesDiff = this.compareAmenities(fromSnapshot.amenities || [], toSnapshot.amenities || []);
         const photosDiff = this.comparePhotos(fromSnapshot.photos || [], toSnapshot.photos || []);
@@ -176,7 +192,7 @@ let SnapshotsService = class SnapshotsService {
         const toByMonth = new Map();
         const fromWithoutDate = [];
         const toWithoutDate = [];
-        console.log(`[Snapshots] Grouping reviews: from=${from?.length || 0}, to=${to?.length || 0}`);
+        this.logger.debug(`Grouping reviews: from=${from?.length || 0}, to=${to?.length || 0}`);
         from.forEach((review) => {
             if (review.date) {
                 try {
@@ -187,7 +203,7 @@ let SnapshotsService = class SnapshotsService {
                     fromByMonth.get(month).push(review);
                 }
                 catch (e) {
-                    console.warn(`[Snapshots] Invalid date for review:`, review.date, e);
+                    this.logger.warn(`Invalid date for review: ${review.date}`, e instanceof Error ? e.stack : String(e));
                     fromWithoutDate.push(review);
                 }
             }
@@ -205,7 +221,7 @@ let SnapshotsService = class SnapshotsService {
                     toByMonth.get(month).push(review);
                 }
                 catch (e) {
-                    console.warn(`[Snapshots] Invalid date for review:`, review.date, e);
+                    this.logger.warn(`Invalid date for review: ${review.date}`, e instanceof Error ? e.stack : String(e));
                     toWithoutDate.push(review);
                 }
             }
@@ -234,12 +250,12 @@ let SnapshotsService = class SnapshotsService {
                 to: toByMonth.get(month) || [],
             };
         });
-        console.log(`[Snapshots] Grouped reviews into ${result.length} month groups`);
+        this.logger.debug(`Grouped reviews into ${result.length} month groups`);
         return result;
     }
 };
 exports.SnapshotsService = SnapshotsService;
-exports.SnapshotsService = SnapshotsService = __decorate([
+exports.SnapshotsService = SnapshotsService = SnapshotsService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService])
 ], SnapshotsService);

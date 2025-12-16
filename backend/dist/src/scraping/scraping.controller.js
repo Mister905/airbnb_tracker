@@ -16,12 +16,13 @@ exports.ScrapingController = void 0;
 const common_1 = require("@nestjs/common");
 const scraping_service_1 = require("./scraping.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const manual_scrape_dto_1 = require("./dto/manual-scrape.dto");
 let ScrapingController = class ScrapingController {
     constructor(scrapingService) {
         this.scrapingService = scrapingService;
     }
-    async manualScrape(req, body) {
-        return this.scrapingService.manualScrape(body.trackedUrlId, req.user.userId);
+    async manualScrape(req, dto) {
+        return this.scrapingService.manualScrape(dto.trackedUrlId, req.user.userId);
     }
     getScrapeStatus(trackedUrlId, req) {
         return this.scrapingService.getScrapeStatus(trackedUrlId, req.user.userId);
@@ -33,7 +34,7 @@ __decorate([
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, manual_scrape_dto_1.ManualScrapeDto]),
     __metadata("design:returntype", Promise)
 ], ScrapingController.prototype, "manualScrape", null);
 __decorate([

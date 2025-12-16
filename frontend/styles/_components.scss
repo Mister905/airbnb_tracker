@@ -330,16 +330,23 @@ h3, .heading-tertiary {
   color: var(--color-text-primary) !important;
 }
 
+// Select item - minimal styling to let Radix UI work, only add focus outline
 [data-radix-select-item] {
-  color: var(--color-text-primary) !important;
+  color: var(--color-text-primary);
   
-  &:hover {
-    background-color: var(--color-surface-elevated) !important;
-  }
-  
+  // Apply visible border/outline on hover or focus
+  &:hover,
+  &:focus,
   &[data-highlighted] {
-    background-color: var(--color-surface-elevated) !important;
+    outline: 2px solid #009F3D;
+    outline-offset: 2px;
   }
+}
+
+// Ensure focus guard doesn't interfere with our styles
+[data-radix-focus-guard] {
+  outline: none !important;
+  pointer-events: none !important;
 }
 
 [data-radix-select-trigger] {

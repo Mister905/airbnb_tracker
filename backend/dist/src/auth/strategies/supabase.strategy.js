@@ -28,6 +28,9 @@ let SupabaseStrategy = class SupabaseStrategy extends (0, passport_1.PassportStr
         this.authService = authService;
     }
     async validate(payload) {
+        if (!payload.sub) {
+            throw new common_1.UnauthorizedException('Missing user ID in token');
+        }
         try {
             const user = await this.authService.validateSupabaseToken(payload.sub);
             return { userId: user.id, email: user.email };

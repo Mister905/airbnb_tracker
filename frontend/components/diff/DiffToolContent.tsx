@@ -46,6 +46,48 @@ export default function DiffToolContent() {
     }
   }, [selectedListingId]);
 
+  // Simple effect to remove outline: none that Radix might set, letting CSS handle the rest
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === 'attributes' && mutation.attributeName === 'data-highlighted') {
+          const target = mutation.target as HTMLElement;
+          if (target.hasAttribute('data-highlighted') && target.style.outline === 'none') {
+            // Remove outline: none to let CSS apply
+            target.style.removeProperty('outline');
+          }
+        }
+      });
+    });
+
+    const observeItems = () => {
+      const selectItems = document.querySelectorAll('[data-radix-select-item]');
+      selectItems.forEach((item) => {
+        observer.observe(item, { 
+          attributes: true, 
+          attributeFilter: ['data-highlighted']
+        });
+      });
+    };
+
+    observeItems();
+
+    // Re-observe when dropdown opens
+    const contentObserver = new MutationObserver(() => {
+      observeItems();
+    });
+
+    const selectContent = document.querySelector('[data-radix-select-content]');
+    if (selectContent) {
+      contentObserver.observe(selectContent, { childList: true, subtree: true });
+    }
+
+    return () => {
+      observer.disconnect();
+      contentObserver.disconnect();
+    };
+  }, [trackedUrls, snapshots]);
+
   // Flatten reviews from grouped format to arrays for ReviewDiff
   const { oldReviews, newReviews } = useMemo(() => {
     if (!comparison?.diffs?.reviews) {
@@ -130,8 +172,8 @@ export default function DiffToolContent() {
                           <Select.Item
                             key={url.listing!.id}
                             value={url.listing!.id}
-                            className="px-3 py-2 cursor-pointer"
-                            style={{ backgroundColor: 'transparent' }}
+                            className="px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none"
+                            style={{ outline: 'none' }}
                           >
                             <Select.ItemText style={{ color: 'var(--color-text-primary)' }}>{displayText}</Select.ItemText>
                           </Select.Item>
@@ -161,8 +203,8 @@ export default function DiffToolContent() {
                           <Select.Item
                             key={snapshot.id}
                             value={snapshot.id}
-                            className="px-3 py-2 cursor-pointer"
-                            style={{ backgroundColor: 'transparent' }}
+                            className="px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none"
+                            style={{ outline: 'none' }}
                           >
                             <Select.ItemText style={{ color: 'var(--color-text-primary)' }}>
                               Version {snapshot.version} - {new Date(snapshot.createdAt).toLocaleDateString()}
@@ -190,8 +232,8 @@ export default function DiffToolContent() {
                           <Select.Item
                             key={snapshot.id}
                             value={snapshot.id}
-                            className="px-3 py-2 cursor-pointer"
-                            style={{ backgroundColor: 'transparent' }}
+                            className="px-3 py-2 cursor-pointer rounded transition-colors focus:outline-none"
+                            style={{ outline: 'none' }}
                           >
                             <Select.ItemText style={{ color: 'var(--color-text-primary)' }}>
                               Version {snapshot.version} - {new Date(snapshot.createdAt).toLocaleDateString()}

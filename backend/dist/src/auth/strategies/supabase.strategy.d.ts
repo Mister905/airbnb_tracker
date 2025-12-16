@@ -6,7 +6,9 @@ export declare class SupabaseStrategy extends SupabaseStrategy_base {
     private configService;
     private authService;
     constructor(configService: ConfigService, authService: AuthService);
-    validate(payload: any): Promise<{
+    validate(payload: {
+        sub?: string;
+    }): Promise<{
         userId: any;
         email: any;
     }>;

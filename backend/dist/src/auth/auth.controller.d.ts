@@ -1,8 +1,9 @@
 import { AuthService } from './auth.service';
+import { VerifyTokenDto } from './dto/verify-token.dto';
 export declare class AuthController {
     private authService;
     constructor(authService: AuthService);
-    verifyToken(token: string): Promise<{
+    verifyToken(dto: VerifyTokenDto): Promise<{
         user: any;
         jwt: string;
     }>;

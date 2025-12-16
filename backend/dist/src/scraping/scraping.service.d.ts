@@ -5,6 +5,7 @@ export declare class ScrapingService {
     private prisma;
     private configService;
     private ingestionService;
+    private readonly logger;
     private apifyClient;
     constructor(prisma: PrismaService, configService: ConfigService, ingestionService: IngestionService);
     scheduledScrape(): Promise<void>;
@@ -12,11 +13,11 @@ export declare class ScrapingService {
         error: string | null;
         id: string;
         trackedUrlId: string | null;
+        snapshotId: string | null;
         status: string;
         startedAt: Date;
         completedAt: Date | null;
         apifyRunId: string | null;
-        snapshotId: string | null;
     }>;
     private scrapeUrl;
     private waitForReviewsCompletion;
@@ -25,10 +26,10 @@ export declare class ScrapingService {
         error: string | null;
         id: string;
         trackedUrlId: string | null;
+        snapshotId: string | null;
         status: string;
         startedAt: Date;
         completedAt: Date | null;
         apifyRunId: string | null;
-        snapshotId: string | null;
     }[]>;
 }

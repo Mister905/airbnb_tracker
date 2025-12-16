@@ -16,12 +16,13 @@ exports.IngestionController = void 0;
 const common_1 = require("@nestjs/common");
 const ingestion_service_1 = require("./ingestion.service");
 const jwt_auth_guard_1 = require("../auth/guards/jwt-auth.guard");
+const ingest_dto_1 = require("./dto/ingest.dto");
 let IngestionController = class IngestionController {
     constructor(ingestionService) {
         this.ingestionService = ingestionService;
     }
-    async ingest(req, body) {
-        return this.ingestionService.ingestData(body.trackedUrlId, req.user.userId, body.data, body.scrapeRunId);
+    async ingest(req, dto) {
+        return this.ingestionService.ingestData(dto.trackedUrlId, req.user.userId, dto.data, dto.scrapeRunId);
     }
 };
 exports.IngestionController = IngestionController;
@@ -30,7 +31,7 @@ __decorate([
     __param(0, (0, common_1.Request)()),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object]),
+    __metadata("design:paramtypes", [Object, ingest_dto_1.IngestDto]),
     __metadata("design:returntype", Promise)
 ], IngestionController.prototype, "ingest", null);
 exports.IngestionController = IngestionController = __decorate([
