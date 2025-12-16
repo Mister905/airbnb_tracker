@@ -124,16 +124,19 @@ export default function DiffToolContent() {
                   <Select.Viewport>
                     {trackedUrls
                       .filter((u) => u.listing)
-                      .map((url) => (
-                        <Select.Item
-                          key={url.listing!.id}
-                          value={url.listing!.id}
-                          className="px-3 py-2 cursor-pointer"
-                          style={{ backgroundColor: 'transparent' }}
-                        >
-                          <Select.ItemText style={{ color: 'var(--color-text-primary)' }}>{url.url}</Select.ItemText>
-                        </Select.Item>
-                      ))}
+                      .map((url) => {
+                        const displayText = url.listing?.title || url.url;
+                        return (
+                          <Select.Item
+                            key={url.listing!.id}
+                            value={url.listing!.id}
+                            className="px-3 py-2 cursor-pointer"
+                            style={{ backgroundColor: 'transparent' }}
+                          >
+                            <Select.ItemText style={{ color: 'var(--color-text-primary)' }}>{displayText}</Select.ItemText>
+                          </Select.Item>
+                        );
+                      })}
                   </Select.Viewport>
                 </Select.Content>
               </Select.Portal>
