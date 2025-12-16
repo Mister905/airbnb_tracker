@@ -32,16 +32,32 @@ export default function LoginPage() {
         // Exchange Supabase token for backend JWT
         try {
           const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+          
+          // Add timeout to prevent hanging
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+          
           const verifyResponse = await fetch(`${API_URL}/auth/verify`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
             },
             body: JSON.stringify({ token: data.session.access_token }),
+            signal: controller.signal,
           });
+          
+          clearTimeout(timeoutId);
 
           if (!verifyResponse.ok) {
-            throw new Error('Failed to verify token with backend');
+            const errorText = await verifyResponse.text();
+            let errorMessage = 'Failed to verify token with backend';
+            try {
+              const errorData = JSON.parse(errorText);
+              errorMessage = errorData.message || errorData.error || errorMessage;
+            } catch {
+              errorMessage = errorText || errorMessage;
+            }
+            throw new Error(`${errorMessage} (Status: ${verifyResponse.status})`);
           }
 
           const verifyData = await verifyResponse.json();
@@ -57,8 +73,18 @@ export default function LoginPage() {
           
           router.push('/dashboard');
         } catch (err) {
-          const error = err instanceof Error ? err : new Error('Failed to authenticate with backend');
-          setError(error.message);
+          let errorMessage = 'Failed to authenticate with backend';
+          if (err instanceof Error) {
+            if (err.name === 'AbortError') {
+              errorMessage = 'Request timed out. The backend may be starting up (this can take 30-60 seconds on free tier). Please try again in a moment.';
+            } else if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError') || err.message.includes('Network request failed')) {
+              errorMessage = `Cannot reach backend at ${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}. The backend may be starting up or unavailable. Please check that NEXT_PUBLIC_API_URL is correctly set in Vercel.`;
+            } else {
+              errorMessage = err.message;
+            }
+          }
+          console.error('Backend authentication error:', err);
+          setError(errorMessage);
         }
       }
     } catch (err) {

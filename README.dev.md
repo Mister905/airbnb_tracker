@@ -458,3 +458,141 @@ curl http://localhost:3001/api/listings/tracked-urls \
 - **Token Exchange**: Supabase token exchanged on first API call if no cached JWT
 - **Session Persistence**: Supabase session persists across page refreshes
 
+## Deployment & Environment Configuration
+
+### Frontend Deployment (Vercel)
+
+The Next.js frontend is deployed on Vercel as a static site with server-side rendering capabilities. Vercel automatically builds and deploys the application from the `main` branch on each push.
+
+**Key Points**:
+- Root directory is configured as `frontend/` in Vercel project settings
+- All frontend environment variables **must** be prefixed with `NEXT_PUBLIC_` to be accessible in the browser
+- Automatic deployments trigger on commits to the main branch
+- Preview deployments are created for pull requests
+
+**CORS Configuration**:
+- The backend must allow requests from Vercel domains
+- Production domain: `https://airbnb-tracker-beta.vercel.app`
+- Preview deployments use pattern: `https://airbnb-tracker-*.vercel.app`
+- Backend CORS configuration in `backend/src/main.ts` includes Vercel domain patterns
+
+### Backend Deployment (Render)
+
+The NestJS backend is deployed as a Web Service on Render. The service runs as a long-lived process to support scheduled cron jobs and background ingestion tasks.
+
+**Key Points**:
+- Root directory is configured as `backend/` in Render service settings
+- Automatic builds trigger on commits to the main branch
+- Docker-based deployment using `backend/Dockerfile`
+- Environment variables are configured via Render dashboard (Settings → Environment)
+- Health checks ensure service availability
+
+**Service Configuration**:
+- Runtime: Docker
+- Build command: Automatic (detects Dockerfile)
+- Start command: Handled by Dockerfile
+- Port binding: Backend listens on `0.0.0.0` to accept Render's port assignment
+
+**Long-Running Processes**:
+- Scheduled scraping cron job runs daily at midnight UTC
+- Background ingestion processes handle Apify data transformation
+- Service remains active to process scheduled tasks
+
+### Database & Auth (Supabase)
+
+Supabase serves multiple roles in the application architecture:
+
+**PostgreSQL Database**:
+- Primary data store for all application data
+- Managed PostgreSQL instance with automatic backups
+- Connection via `DATABASE_URL` environment variable
+- Prisma ORM manages schema and migrations
+
+**Authentication Provider**:
+- User authentication via email/password
+- JWT-based session management
+- Frontend uses Supabase client SDK for auth operations
+- Backend validates Supabase tokens and issues application JWTs
+
+**Key Configuration**:
+- **Frontend**: Uses Supabase `anon` key (`NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+  - Limited permissions via Row Level Security (RLS)
+  - Can only access user's own data
+- **Backend**: Uses Supabase `service_role` key (`SUPABASE_SERVICE_ROLE_KEY`)
+  - Bypasses RLS for administrative operations
+  - Used for token validation and user lookup
+
+**Row Level Security (RLS)**:
+- RLS policies enforce data isolation at the database level
+- Users can only access records where `userId` matches their authenticated user ID
+- Backend queries filter by `userId` from JWT payload for additional security
+
+### Environment Variables
+
+#### Frontend Variables (Vercel)
+
+All frontend environment variables must be prefixed with `NEXT_PUBLIC_` to be accessible in the browser.
+
+| Variable | Used By | Purpose |
+|----------|---------|---------|
+| `NEXT_PUBLIC_API_URL` | Frontend API client | Backend API base URL (e.g., `https://airbnb-tracker.onrender.com`) |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase client | Supabase project URL for authentication and database access |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase client | Supabase anonymous key for frontend authentication operations |
+
+**Configuration**:
+- Set in Vercel project settings → Environment Variables
+- Available to all deployment environments (Production, Preview, Development)
+- Values are exposed in the browser bundle (never include secrets)
+
+#### Backend Variables (Render)
+
+Backend environment variables are configured via Render dashboard and are not exposed to the browser.
+
+| Variable | Used By | Purpose |
+|----------|---------|---------|
+| `DATABASE_URL` | Prisma Client | PostgreSQL connection string (Supabase database URL) |
+| `SUPABASE_URL` | AuthService | Supabase project URL for token validation |
+| `SUPABASE_SERVICE_ROLE_KEY` | AuthService | Supabase service role key for administrative operations |
+| `SUPABASE_JWT_SECRET` | AuthService | Supabase JWT secret for token signature verification |
+| `JWT_SECRET` | JwtStrategy | Backend JWT signing secret for application tokens |
+| `APIFY_TOKEN` | ScrapingService | Apify API token for actor authentication |
+| `APIFY_ACTOR_ID_ROOMS` | ScrapingService | Apify actor ID for rooms scraper (required) |
+| `APIFY_ACTOR_ID_REVIEWS` | ScrapingService | Apify actor ID for reviews scraper (optional) |
+
+**Optional Configuration**:
+- `FRONTEND_URL` - Frontend URL for CORS configuration (defaults to `http://localhost:3000`)
+- `PORT` - Backend server port (defaults to `3001`, Render assigns port automatically)
+- `BATCH_SIZE` - Reviews batch size (default: 5)
+- `RATE_LIMIT_DELAY` - Delay between review batches in seconds (default: 2.0)
+- `REVIEW_TIMEOUT` - Reviews scraper timeout in seconds (default: 300)
+- `REVIEW_POLL_INTERVAL` - Polling interval in seconds (default: 10)
+
+**Configuration**:
+- Set in Render service settings → Environment
+- Available only to backend runtime (never exposed to frontend)
+- Changes require service restart to take effect
+
+### Deployment Order (Recommended)
+
+**1. Backend Deployment (Render)**
+- Deploy backend first to establish the API endpoint
+- Verify backend is accessible at the Render URL
+- Confirm all environment variables are set correctly
+- Test health endpoint if configured
+
+**2. Frontend Environment Variables (Vercel)**
+- Set `NEXT_PUBLIC_API_URL` to the Render backend URL
+- Set Supabase variables (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+- Verify variables are available in the deployment environment
+
+**3. Frontend Deployment (Vercel)**
+- Deploy frontend after backend URL is confirmed
+- Frontend depends on backend API being available
+- Verify CORS allows requests from Vercel domain
+
+**Why This Order Matters**:
+- Frontend build-time environment variables are baked into the bundle
+- If `NEXT_PUBLIC_API_URL` is incorrect, frontend cannot communicate with backend
+- Backend must be running and accessible before frontend can authenticate users
+- CORS configuration in backend must include Vercel domain before frontend requests will succeed
+

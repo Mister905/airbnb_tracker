@@ -13,8 +13,36 @@ async function bootstrap() {
     }),
   );
 
+  // Allow multiple origins for CORS (local dev + Vercel production)
+  const allowedOrigins = [
+    process.env.FRONTEND_URL || 'http://localhost:3000',
+    'https://airbnb-tracker-beta.vercel.app',
+    'https://airbnb-tracker-git-master-james-mccarthys-projects-1b023043.vercel.app',
+    // Allow any Vercel preview deployment
+    /^https:\/\/airbnb-tracker.*\.vercel\.app$/,
+  ];
+
   app.enableCors({
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin matches any allowed origin
+      const isAllowed = allowedOrigins.some(allowed => {
+        if (typeof allowed === 'string') {
+          return origin === allowed;
+        } else if (allowed instanceof RegExp) {
+          return allowed.test(origin);
+        }
+        return false;
+      });
+      
+      if (isAllowed) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
     credentials: true,
   });
 
