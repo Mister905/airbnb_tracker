@@ -38,6 +38,14 @@ export default function DiffToolContent() {
     }
   }, [fromSnapshotId, toSnapshotId, dispatch]);
 
+  // Clear comparison when listing is deselected
+  useEffect(() => {
+    if (!selectedListingId) {
+      setFromSnapshotId('');
+      setToSnapshotId('');
+    }
+  }, [selectedListingId]);
+
   // Flatten reviews from grouped format to arrays for ReviewDiff
   const { oldReviews, newReviews } = useMemo(() => {
     if (!comparison?.diffs?.reviews) {
@@ -224,7 +232,7 @@ export default function DiffToolContent() {
         </div>
       </div>
 
-      {comparison && (
+      {selectedListingId && comparison && (
         <div className="card">
           {/* Summary Banner */}
           <div className="mb-6">
