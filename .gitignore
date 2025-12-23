@@ -32,6 +32,7 @@ yarn-error.log*
 next-env.d.ts
 
 # Prisma
-backend/prisma/migrations/
+backend/prisma/migrations
 # Next.js
 frontend/.next
+backend/dist

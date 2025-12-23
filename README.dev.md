@@ -619,3 +619,66 @@ Backend environment variables are configured via Render dashboard and are not ex
 - Backend must be running and accessible before frontend can authenticate users
 - CORS configuration in backend must include Vercel domain before frontend requests will succeed
 
+## Syncing Simulated Scrape Data to Production
+
+To ensure the production Supabase database has the same simulated scrape data as your local database, you have two options:
+
+### Option 1: Run Simulation Script Against Production (Recommended)
+
+Run the simulation script directly against the production database:
+
+```bash
+# Set production database URL
+export PRODUCTION_DATABASE_URL="postgresql://user:password@host:5432/dbname"
+
+# Run simulation against production
+npm run simulate:scrapes:prod
+```
+
+**Note**: Get your production database URL from Supabase Dashboard → Settings → Database → Connection string (use the "URI" format).
+
+### Option 2: Sync Existing Snapshots from Local to Production
+
+If you've already created snapshots locally and want to copy them to production:
+
+```bash
+# Set production database URL
+export PRODUCTION_DATABASE_URL="postgresql://user:password@host:5432/dbname"
+
+# Sync snapshots
+npm run sync:snapshots
+```
+
+**Requirements**:
+- The tracked URLs must already exist in production (the script will skip listings if their tracked URLs aren't found)
+- The script will skip snapshots that already exist (same version number)
+- You'll be prompted to confirm before any changes are made
+
+**What Gets Synced**:
+- Listing snapshots (with all metadata: description, amenities, price, rating, etc.)
+- Photos (with URLs, captions, and order)
+- Reviews (with all review data)
+- Scrape runs (if associated with snapshots)
+
+**Safety Features**:
+- Confirmation prompt before making changes
+- Skips existing snapshots (won't duplicate)
+- Skips listings if tracked URL doesn't exist in production
+- Uses `skipDuplicates` for reviews to prevent conflicts
+
+### Getting Production Database URL
+
+1. Go to [Supabase Dashboard](https://app.supabase.com)
+2. Select your project
+3. Go to Settings → Database
+4. Find "Connection string" section
+5. Copy the "URI" connection string
+6. Set it as `PRODUCTION_DATABASE_URL` in your `.env` file or export it as an environment variable
+
+**Example**:
+```
+postgresql://postgres.[project-ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres
+```
+
+**Security Note**: Never commit production database URLs to version control. Always use environment variables or `.env` files (which are gitignored).
+

@@ -4,21 +4,21 @@ export declare class ListingsService {
     private prisma;
     constructor(prisma: PrismaService);
     createTrackedUrl(userId: string, dto: CreateTrackedUrlDto): Promise<{
-        url: string;
-        enabled: boolean;
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        url: string;
+        enabled: boolean;
+        userId: string;
     }>;
     findAllTrackedUrls(userId: string): Promise<({
         listing: {
             snapshots: {
                 id: string;
-                createdAt: Date;
-                listingId: string;
-                version: number;
                 description: string | null;
+                createdAt: Date;
+                version: number;
+                listingId: string;
                 amenities: import("@prisma/client/runtime/library").JsonValue | null;
                 price: number | null;
                 currency: string | null;
@@ -27,30 +27,30 @@ export declare class ListingsService {
             }[];
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
             trackedUrlId: string;
             airbnbId: string | null;
             title: string | null;
+            description: string | null;
             location: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         };
     } & {
-        url: string;
-        enabled: boolean;
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        url: string;
+        enabled: boolean;
+        userId: string;
     })[]>;
     findOneTrackedUrl(id: string, userId: string): Promise<{
         listing: {
             snapshots: {
                 id: string;
-                createdAt: Date;
-                listingId: string;
-                version: number;
                 description: string | null;
+                createdAt: Date;
+                version: number;
+                listingId: string;
                 amenities: import("@prisma/client/runtime/library").JsonValue | null;
                 price: number | null;
                 currency: string | null;
@@ -59,54 +59,54 @@ export declare class ListingsService {
             }[];
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
             trackedUrlId: string;
             airbnbId: string | null;
             title: string | null;
+            description: string | null;
             location: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         };
     } & {
-        url: string;
-        enabled: boolean;
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        url: string;
+        enabled: boolean;
+        userId: string;
     }>;
     updateTrackedUrl(id: string, userId: string, dto: UpdateTrackedUrlDto): Promise<{
-        url: string;
-        enabled: boolean;
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        url: string;
+        enabled: boolean;
+        userId: string;
     }>;
     removeTrackedUrl(id: string, userId: string): Promise<{
-        url: string;
-        enabled: boolean;
         id: string;
-        userId: string;
         createdAt: Date;
         updatedAt: Date;
+        url: string;
+        enabled: boolean;
+        userId: string;
     }>;
     findAllListings(userId: string, page?: number, limit?: number): Promise<{
         data: ({
             trackedUrl: {
-                url: string;
-                enabled: boolean;
                 id: string;
-                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                url: string;
+                enabled: boolean;
+                userId: string;
             };
             snapshots: {
                 id: string;
-                createdAt: Date;
-                listingId: string;
-                version: number;
                 description: string | null;
+                createdAt: Date;
+                version: number;
+                listingId: string;
                 amenities: import("@prisma/client/runtime/library").JsonValue | null;
                 price: number | null;
                 currency: string | null;
@@ -114,19 +114,19 @@ export declare class ListingsService {
                 reviewCount: number | null;
             }[];
             _count: {
+                snapshots: number;
                 photos: number;
                 reviews: number;
-                snapshots: number;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
             trackedUrlId: string;
             airbnbId: string | null;
             title: string | null;
+            description: string | null;
             location: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         })[];
         pagination: {
             page: number;
@@ -137,19 +137,19 @@ export declare class ListingsService {
     }>;
     findOneListing(id: string, userId: string): Promise<{
         trackedUrl: {
-            url: string;
-            enabled: boolean;
             id: string;
-            userId: string;
             createdAt: Date;
             updatedAt: Date;
+            url: string;
+            enabled: boolean;
+            userId: string;
         };
         snapshots: {
             id: string;
-            createdAt: Date;
-            listingId: string;
-            version: number;
             description: string | null;
+            createdAt: Date;
+            version: number;
+            listingId: string;
             amenities: import("@prisma/client/runtime/library").JsonValue | null;
             price: number | null;
             currency: string | null;
@@ -157,18 +157,18 @@ export declare class ListingsService {
             reviewCount: number | null;
         }[];
         _count: {
+            snapshots: number;
             photos: number;
             reviews: number;
-            snapshots: number;
         };
     } & {
         id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        description: string | null;
         trackedUrlId: string;
         airbnbId: string | null;
         title: string | null;
+        description: string | null;
         location: string | null;
+        createdAt: Date;
+        updatedAt: Date;
     }>;
 }

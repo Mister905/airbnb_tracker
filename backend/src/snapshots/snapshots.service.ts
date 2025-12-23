@@ -192,17 +192,29 @@ export class SnapshotsService {
   }
 
   private compareAmenities(from: any[], to: any[]) {
-    const fromSet = new Set(from.map((a) => a.id || a.name));
-    const toSet = new Set(to.map((a) => a.id || a.name));
+    // Handle both string arrays and object arrays
+    const normalizeAmenity = (a: any): string => {
+      if (typeof a === 'string') {
+        return a;
+      }
+      if (typeof a === 'object' && a !== null) {
+        return a.id || a.name || a.title || String(a);
+      }
+      return String(a);
+    };
 
-    const added = to.filter((a) => !fromSet.has(a.id || a.name));
-    const removed = from.filter((a) => !toSet.has(a.id || a.name));
+    const fromSet = new Set(from.map(normalizeAmenity));
+    const toSet = new Set(to.map(normalizeAmenity));
+
+    const added = to.filter((a) => !fromSet.has(normalizeAmenity(a)));
+    const removed = from.filter((a) => !toSet.has(normalizeAmenity(a)));
 
     return {
       from,
       to,
       added,
       removed,
+      unchanged: from.filter((a) => toSet.has(normalizeAmenity(a))),
       changed: added.length > 0 || removed.length > 0,
     };
   }

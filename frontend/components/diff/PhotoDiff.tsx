@@ -140,9 +140,10 @@ export default function PhotoDiff({
   showAll: externalShowAll,
   onShowAllChange 
 }: PhotoDiffProps) {
-  // Convert photos to format expected by diffPhotos (with imageId)
-  const normalizedOld = oldPhotos.map(p => ({ url: p.url, imageId: p.imageId || p.id || p.url }));
-  const normalizedNew = newPhotos.map(p => ({ url: p.url, imageId: p.imageId || p.id || p.url }));
+  // Convert photos to format expected by diffPhotos
+  // Use URL as the primary identifier (not ID, since IDs change between snapshots)
+  const normalizedOld = oldPhotos.map(p => ({ url: p.url, imageId: p.imageId }));
+  const normalizedNew = newPhotos.map(p => ({ url: p.url, imageId: p.imageId }));
   
   const diff = diffPhotos(normalizedOld, normalizedNew);
   const [internalShowAll, setInternalShowAll] = useState(false);

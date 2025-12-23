@@ -9,9 +9,12 @@ export function diffPhotos(
   oldPhotos: { url: string; id?: string; imageId?: string }[],
   newPhotos: { url: string; id?: string; imageId?: string }[]
 ): PhotoDiff {
-  // Use id or imageId or url as the unique identifier
+  // Use URL as the primary identifier for comparison (not ID, since IDs change between snapshots)
+  // Only use imageId if explicitly provided, otherwise use URL
   const getImageId = (photo: { url: string; id?: string; imageId?: string }) => {
-    return photo.imageId || photo.id || photo.url;
+    // If imageId is explicitly provided, use it (for cases where we want to track specific images)
+    // Otherwise, use URL as the identifier since that's what persists across snapshots
+    return photo.imageId || photo.url;
   };
 
   const oldMap = new Map(oldPhotos.map((p, i) => [getImageId(p), { ...p, index: i }]));

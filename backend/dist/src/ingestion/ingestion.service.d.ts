@@ -52,10 +52,10 @@ export declare class IngestionService {
     constructor(prisma: PrismaService);
     ingestData(trackedUrlId: string, userId: string, data: ApifyListingData[], scrapeRunId: string): Promise<{
         id: string;
-        createdAt: Date;
-        listingId: string;
-        version: number;
         description: string | null;
+        createdAt: Date;
+        version: number;
+        listingId: string;
         amenities: import("@prisma/client/runtime/library").JsonValue | null;
         price: number | null;
         currency: string | null;

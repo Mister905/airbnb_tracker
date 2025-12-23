@@ -10,6 +10,8 @@ import ArrayDiff from './ArrayDiff';
 import PhotoDiff from './PhotoDiff';
 import ReviewDiff from './ReviewDiff';
 import SummaryBanner from './SummaryBanner';
+import { diffPhotos } from '@/lib/diff/photos';
+import { diffReviews } from '@/lib/diff/reviews';
 
 export default function DiffToolContent() {
   const dispatch = useAppDispatch();
@@ -69,40 +71,72 @@ export default function DiffToolContent() {
     return { oldReviews: old, newReviews: new_ };
   }, [comparison]);
 
-  // Generate summary text
-  const summaryText = useMemo(() => {
-    if (!comparison) return '';
+  // Generate summary items
+  const summaryItems = useMemo(() => {
+    if (!comparison) return [];
     
-    const parts: string[] = [];
+    const items: string[] = [];
     
     if (comparison.diffs.description.changed) {
-      parts.push('Description changed');
+      items.push('Description changed');
     }
     
     if (comparison.diffs.amenities.added.length > 0) {
-      parts.push(`${comparison.diffs.amenities.added.length} amenit${comparison.diffs.amenities.added.length === 1 ? 'y' : 'ies'} added`);
+      items.push(`${comparison.diffs.amenities.added.length} amenit${comparison.diffs.amenities.added.length === 1 ? 'y' : 'ies'} added`);
     }
     if (comparison.diffs.amenities.removed.length > 0) {
-      parts.push(`${comparison.diffs.amenities.removed.length} amenit${comparison.diffs.amenities.removed.length === 1 ? 'y' : 'ies'} removed`);
+      items.push(`${comparison.diffs.amenities.removed.length} amenit${comparison.diffs.amenities.removed.length === 1 ? 'y' : 'ies'} removed`);
     }
     
-    if (comparison.diffs.photos.added.length > 0) {
-      parts.push(`${comparison.diffs.photos.added.length} photo${comparison.diffs.photos.added.length === 1 ? '' : 's'} added`);
+    // Use the same photo comparison logic as PhotoDiff component for consistency
+    // Use URL as the primary identifier (not ID, since IDs change between snapshots)
+    const oldPhotos = (comparison.from.photos || []).map(p => ({ url: p.url, imageId: p.id }));
+    const newPhotos = (comparison.to.photos || []).map(p => ({ url: p.url, imageId: p.id }));
+    const photoDiff = diffPhotos(oldPhotos, newPhotos);
+    
+    if (photoDiff.added.length > 0) {
+      items.push(`${photoDiff.added.length} photo${photoDiff.added.length === 1 ? '' : 's'} added`);
     }
-    if (comparison.diffs.photos.removed.length > 0) {
-      parts.push(`${comparison.diffs.photos.removed.length} photo${comparison.diffs.photos.removed.length === 1 ? '' : 's'} removed`);
+    if (photoDiff.removed.length > 0) {
+      items.push(`${photoDiff.removed.length} photo${photoDiff.removed.length === 1 ? '' : 's'} removed`);
+    }
+    if (photoDiff.moved.length > 0) {
+      items.push(`${photoDiff.moved.length} photo${photoDiff.moved.length === 1 ? '' : 's'} moved`);
     }
     
     if (comparison.diffs.price.changed) {
-      parts.push(`Price changed from ${comparison.diffs.price.from || 'N/A'} to ${comparison.diffs.price.to || 'N/A'}`);
+      items.push(`Price changed from ${comparison.diffs.price.from || 'N/A'} to ${comparison.diffs.price.to || 'N/A'}`);
     }
     
     if (comparison.diffs.rating.changed) {
-      parts.push(`Rating changed from ${comparison.diffs.rating.from || 'N/A'} to ${comparison.diffs.rating.to || 'N/A'}`);
+      items.push(`Rating changed from ${comparison.diffs.rating.from || 'N/A'} to ${comparison.diffs.rating.to || 'N/A'}`);
     }
     
-    return parts.length > 0 ? parts.join(', ') : 'No changes detected';
-  }, [comparison]);
+    // Use the same review comparison logic as ReviewDiff component for consistency
+    const reviewDiff = diffReviews(oldReviews, newReviews);
+    
+    if (reviewDiff.added.length > 0) {
+      items.push(`${reviewDiff.added.length} review${reviewDiff.added.length === 1 ? '' : 's'} added`);
+    }
+    if (reviewDiff.removed.length > 0) {
+      items.push(`${reviewDiff.removed.length} review${reviewDiff.removed.length === 1 ? '' : 's'} removed`);
+    }
+    if (reviewDiff.updated.length > 0) {
+      items.push(`${reviewDiff.updated.length} review${reviewDiff.updated.length === 1 ? '' : 's'} updated`);
+    }
+    
+    // Also show review count change if it differs from the diff count
+    if (comparison.diffs.reviewCount.changed) {
+      const diffCount = reviewDiff.added.length - reviewDiff.removed.length;
+      const countChange = (comparison.diffs.reviewCount.to || 0) - (comparison.diffs.reviewCount.from || 0);
+      // Only show review count if it provides additional info beyond the diff
+      if (Math.abs(countChange) !== Math.abs(diffCount)) {
+        items.push(`Review count changed from ${comparison.diffs.reviewCount.from || 'N/A'} to ${comparison.diffs.reviewCount.to || 'N/A'}`);
+      }
+    }
+    
+    return items;
+  }, [comparison, oldReviews, newReviews]);
 
   // Get listing options
   const listingOptions = useMemo(() => {
@@ -295,7 +329,7 @@ export default function DiffToolContent() {
         <div className="card">
           {/* Summary Banner */}
           <div className="mb-6">
-            <SummaryBanner summaryText={summaryText} />
+            <SummaryBanner summaryItems={summaryItems} />
           </div>
 
           {/* Simple Tabs Implementation */}

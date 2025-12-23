@@ -24,7 +24,12 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "prisma:seed": "ts-node prisma/seed.ts"
+    "prisma:seed": "ts-node prisma/seed.ts",
+    "simulate:scrapes": "ts-node scripts/simulate-scrapes.ts",
+    "simulate:scrapes:prod": "ts-node scripts/simulate-scrapes.ts -- --database-url=$PRODUCTION_DATABASE_URL",
+    "cleanup:snapshots": "ts-node scripts/cleanup-simulated-snapshots.ts",
+    "sync:snapshots": "ts-node scripts/sync-snapshots-to-production.ts",
+    "sync:snapshots:mcp": "ts-node scripts/sync-snapshots-mcp.ts"
   },
   "dependencies": {
     "@nestjs/common": "^10.3.0",

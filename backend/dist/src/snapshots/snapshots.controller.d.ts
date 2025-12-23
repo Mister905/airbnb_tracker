@@ -4,6 +4,27 @@ export declare class SnapshotsController {
     constructor(snapshotsService: SnapshotsService);
     findAllSnapshots(listingId: string, req: any, page?: number, limit?: number, startDate?: string, endDate?: string): Promise<{
         data: ({
+            photos: {
+                id: string;
+                createdAt: Date;
+                listingId: string;
+                snapshotId: string | null;
+                url: string;
+                caption: string | null;
+                order: number | null;
+            }[];
+            reviews: {
+                id: string;
+                createdAt: Date;
+                listingId: string;
+                rating: number | null;
+                snapshotId: string | null;
+                reviewId: string;
+                reviewerName: string | null;
+                reviewerAvatar: string | null;
+                comment: string | null;
+                date: Date | null;
+            }[];
             scrapeRun: {
                 error: string | null;
                 id: string;
@@ -14,33 +35,12 @@ export declare class SnapshotsController {
                 completedAt: Date | null;
                 apifyRunId: string | null;
             };
-            photos: {
-                url: string;
-                id: string;
-                createdAt: Date;
-                listingId: string;
-                order: number | null;
-                snapshotId: string | null;
-                caption: string | null;
-            }[];
-            reviews: {
-                id: string;
-                createdAt: Date;
-                listingId: string;
-                rating: number | null;
-                snapshotId: string | null;
-                date: Date | null;
-                reviewId: string;
-                reviewerName: string | null;
-                reviewerAvatar: string | null;
-                comment: string | null;
-            }[];
         } & {
             id: string;
-            createdAt: Date;
-            listingId: string;
-            version: number;
             description: string | null;
+            createdAt: Date;
+            version: number;
+            listingId: string;
             amenities: import("@prisma/client/runtime/library").JsonValue | null;
             price: number | null;
             currency: string | null;
@@ -57,23 +57,44 @@ export declare class SnapshotsController {
     findOneSnapshot(id: string, req: any): Promise<{
         listing: {
             trackedUrl: {
-                url: string;
-                enabled: boolean;
                 id: string;
-                userId: string;
                 createdAt: Date;
                 updatedAt: Date;
+                url: string;
+                enabled: boolean;
+                userId: string;
             };
         } & {
             id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            description: string | null;
             trackedUrlId: string;
             airbnbId: string | null;
             title: string | null;
+            description: string | null;
             location: string | null;
+            createdAt: Date;
+            updatedAt: Date;
         };
+        photos: {
+            id: string;
+            createdAt: Date;
+            listingId: string;
+            snapshotId: string | null;
+            url: string;
+            caption: string | null;
+            order: number | null;
+        }[];
+        reviews: {
+            id: string;
+            createdAt: Date;
+            listingId: string;
+            rating: number | null;
+            snapshotId: string | null;
+            reviewId: string;
+            reviewerName: string | null;
+            reviewerAvatar: string | null;
+            comment: string | null;
+            date: Date | null;
+        }[];
         scrapeRun: {
             error: string | null;
             id: string;
@@ -84,33 +105,12 @@ export declare class SnapshotsController {
             completedAt: Date | null;
             apifyRunId: string | null;
         };
-        photos: {
-            url: string;
-            id: string;
-            createdAt: Date;
-            listingId: string;
-            order: number | null;
-            snapshotId: string | null;
-            caption: string | null;
-        }[];
-        reviews: {
-            id: string;
-            createdAt: Date;
-            listingId: string;
-            rating: number | null;
-            snapshotId: string | null;
-            date: Date | null;
-            reviewId: string;
-            reviewerName: string | null;
-            reviewerAvatar: string | null;
-            comment: string | null;
-        }[];
     } & {
         id: string;
-        createdAt: Date;
-        listingId: string;
-        version: number;
         description: string | null;
+        createdAt: Date;
+        version: number;
+        listingId: string;
         amenities: import("@prisma/client/runtime/library").JsonValue | null;
         price: number | null;
         currency: string | null;
@@ -121,23 +121,44 @@ export declare class SnapshotsController {
         from: {
             listing: {
                 trackedUrl: {
-                    url: string;
-                    enabled: boolean;
                     id: string;
-                    userId: string;
                     createdAt: Date;
                     updatedAt: Date;
+                    url: string;
+                    enabled: boolean;
+                    userId: string;
                 };
             } & {
                 id: string;
-                createdAt: Date;
-                updatedAt: Date;
-                description: string | null;
                 trackedUrlId: string;
                 airbnbId: string | null;
                 title: string | null;
+                description: string | null;
                 location: string | null;
+                createdAt: Date;
+                updatedAt: Date;
             };
+            photos: {
+                id: string;
+                createdAt: Date;
+                listingId: string;
+                snapshotId: string | null;
+                url: string;
+                caption: string | null;
+                order: number | null;
+            }[];
+            reviews: {
+                id: string;
+                createdAt: Date;
+                listingId: string;
+                rating: number | null;
+                snapshotId: string | null;
+                reviewId: string;
+                reviewerName: string | null;
+                reviewerAvatar: string | null;
+                comment: string | null;
+                date: Date | null;
+            }[];
             scrapeRun: {
                 error: string | null;
                 id: string;
@@ -148,33 +169,12 @@ export declare class SnapshotsController {
                 completedAt: Date | null;
                 apifyRunId: string | null;
             };
-            photos: {
-                url: string;
-                id: string;
-                createdAt: Date;
-                listingId: string;
-                order: number | null;
-                snapshotId: string | null;
-                caption: string | null;
-            }[];
-            reviews: {
-                id: string;
-                createdAt: Date;
-                listingId: string;
-                rating: number | null;
-                snapshotId: string | null;
-                date: Date | null;
-                reviewId: string;
-                reviewerName: string | null;
-                reviewerAvatar: string | null;
-                comment: string | null;
-            }[];
         } & {
             id: string;
-            createdAt: Date;
-            listingId: string;
-            version: number;
             description: string | null;
+            createdAt: Date;
+            version: number;
+            listingId: string;
             amenities: import("@prisma/client/runtime/library").JsonValue | null;
             price: number | null;
             currency: string | null;
@@ -184,23 +184,44 @@ export declare class SnapshotsController {
         to: {
             listing: {
                 trackedUrl: {
-                    url: string;
-                    enabled: boolean;
                     id: string;
-                    userId: string;
                     createdAt: Date;
                     updatedAt: Date;
+                    url: string;
+                    enabled: boolean;
+                    userId: string;
                 };
             } & {
                 id: string;
-                createdAt: Date;
-                updatedAt: Date;
-                description: string | null;
                 trackedUrlId: string;
                 airbnbId: string | null;
                 title: string | null;
+                description: string | null;
                 location: string | null;
+                createdAt: Date;
+                updatedAt: Date;
             };
+            photos: {
+                id: string;
+                createdAt: Date;
+                listingId: string;
+                snapshotId: string | null;
+                url: string;
+                caption: string | null;
+                order: number | null;
+            }[];
+            reviews: {
+                id: string;
+                createdAt: Date;
+                listingId: string;
+                rating: number | null;
+                snapshotId: string | null;
+                reviewId: string;
+                reviewerName: string | null;
+                reviewerAvatar: string | null;
+                comment: string | null;
+                date: Date | null;
+            }[];
             scrapeRun: {
                 error: string | null;
                 id: string;
@@ -211,33 +232,12 @@ export declare class SnapshotsController {
                 completedAt: Date | null;
                 apifyRunId: string | null;
             };
-            photos: {
-                url: string;
-                id: string;
-                createdAt: Date;
-                listingId: string;
-                order: number | null;
-                snapshotId: string | null;
-                caption: string | null;
-            }[];
-            reviews: {
-                id: string;
-                createdAt: Date;
-                listingId: string;
-                rating: number | null;
-                snapshotId: string | null;
-                date: Date | null;
-                reviewId: string;
-                reviewerName: string | null;
-                reviewerAvatar: string | null;
-                comment: string | null;
-            }[];
         } & {
             id: string;
-            createdAt: Date;
-            listingId: string;
-            version: number;
             description: string | null;
+            createdAt: Date;
+            version: number;
+            listingId: string;
             amenities: import("@prisma/client/runtime/library").JsonValue | null;
             price: number | null;
             currency: string | null;
@@ -255,6 +255,7 @@ export declare class SnapshotsController {
                 to: any[];
                 added: any[];
                 removed: any[];
+                unchanged: any[];
                 changed: boolean;
             };
             photos: {
